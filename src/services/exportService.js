@@ -24,3 +24,4 @@ export function exportToCSV(filename, rows) {
   link.click();
   document.body.removeChild(link);
 }
+

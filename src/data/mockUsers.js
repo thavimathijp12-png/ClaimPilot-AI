@@ -30,9 +30,10 @@ export const DEMO_ACCOUNTS = [
     name: 'Sarah Jenkins, RN',
     role: 'Claims Reviewer',
     roleCode: 'reviewer',
-    avatar: 'https://images.unsplash.com/photo-1594824813589-8d145e14f6b1?auto=format&fit=crop&q=80&w=150',
+    avatar: null,
     department: 'Clinical Adjudication & Audit',
     title: 'Clinical Adjudication Reviewer',
     badge: 'Adjudication Reviewer',
   },
 ];
+

@@ -206,3 +206,4 @@ npm run preview
 - **Spring Boot Backend Ready:** All services and context methods (`storageService.js`, `ClaimContext.jsx`) mirror standard REST endpoint contracts (`GET /api/claims`, `POST /api/claims`, `POST /api/claims/{id}/adjudicate`, `POST /api/documents/upload`, `GET /api/dataguard/audit/{id}`).
 - **Synthetic Data Guarantee:** All patient names, policy IDs, hospital records, and codes are completely synthetic demo representations.
 - **Zero Python / Frontend-Only:** Runs self-contained within any modern browser with persistent localStorage state.
+
