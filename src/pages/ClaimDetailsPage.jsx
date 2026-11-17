@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
+import CodeBadge from '../components/common/CodeBadge';
 import { formatCurrency, formatDate, formatRelativeTime, formatFileSize } from '../utils/formatters';
 
 export function ClaimDetailsPage() {
@@ -212,24 +213,29 @@ export function ClaimDetailsPage() {
             {/* Diagnostic Codes Table */}
             {claim.diagnosisCodes && claim.diagnosisCodes.length > 0 && (
               <div className="mt-4 pt-4 border-t border-slate-100">
-                <span className="text-xs font-bold text-slate-700 block mb-2">Diagnostic & Procedure Codes</span>
-                <div className="space-y-1.5">
+                <span className="text-xs font-bold text-slate-700 block mb-2.5">
+                  Validated Diagnostic & Procedure Codes
+                </span>
+                <div className="flex flex-wrap gap-2.5">
                   {claim.diagnosisCodes.map((d, i) => (
-                    <div key={i} className="flex items-center gap-2 text-xs">
-                      <span className="px-2 py-0.5 bg-blue-50 text-blue-700 font-mono font-bold rounded border border-blue-200">
-                        {d.code}
-                      </span>
-                      <span className="text-slate-600">{d.description}</span>
-                    </div>
+                    <CodeBadge
+                      key={`diag-${i}`}
+                      code={d.code}
+                      description={d.description}
+                      type="diagnosis"
+                      showDescription={true}
+                    />
                   ))}
-                  {claim.procedureCodes && claim.procedureCodes.map((p, i) => (
-                    <div key={`p-${i}`} className="flex items-center gap-2 text-xs">
-                      <span className="px-2 py-0.5 bg-teal-50 text-teal-700 font-mono font-bold rounded border border-teal-200">
-                        CPT {p.code}
-                      </span>
-                      <span className="text-slate-600">{p.description}</span>
-                    </div>
-                  ))}
+                  {claim.procedureCodes &&
+                    claim.procedureCodes.map((p, i) => (
+                      <CodeBadge
+                        key={`proc-${i}`}
+                        code={p.code}
+                        description={p.description}
+                        type="procedure"
+                        showDescription={true}
+                      />
+                    ))}
                 </div>
               </div>
             )}
