@@ -1,6 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" rx="14" fill="#10233F"/>
-  <path d="M32 10C24 10 18 14 18 24C18 38 32 52 32 52C32 52 46 38 46 24C46 14 40 10 32 10Z" fill="#172B4D" stroke="#2563EB" stroke-width="2.5" stroke-linejoin="round"/>
-  <path d="M22 30H27L30 22L34 38L37 28L39 30H42" stroke="#0D9488" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="32" cy="18" r="3" fill="#2563EB"/>
+  <!-- Obsidian Background -->
+  <rect width="64" height="64" rx="16" fill="#171923" />
+  
+  <!-- Champagne Gold Heart Outline -->
+  <path
+    d="M32 20C27 13.5 19 13.5 14 19C8.5 25 9.5 34.5 16.5 41.5L32 52L47.5 41.5C54.5 34.5 55.5 25 50 19C45 13.5 37 13.5 32 20Z"
+    stroke="#C6A15B"
+    stroke-width="3.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  
+  <!-- Champagne Gold ECG Heartbeat Pulse -->
+  <path
+    d="M9 33H23L26 36L31 17L35 45L39 28L42 33H55"
+    stroke="#C6A15B"
+    stroke-width="3.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 </svg>

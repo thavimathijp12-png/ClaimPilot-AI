@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { Avatar } from '../common/Avatar';
 import { User, Settings, LogOut, Check, ShieldCheck, ChevronDown, RefreshCw } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
@@ -41,10 +42,12 @@ export function UserProfileDropdown() {
         className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/20"
         aria-label="User account menu"
       >
-        <img
+        <Avatar
           src={currentUser.avatar}
-          alt={currentUser.name}
-          className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-slate-200"
+          name={currentUser.name}
+          role={currentUser.role}
+          size="sm"
+          className="w-7 h-7 sm:w-8 sm:h-8"
         />
         <div className="hidden md:flex flex-col text-left">
           <span className="text-xs font-bold text-navy truncate max-w-[130px] leading-tight">
@@ -62,10 +65,12 @@ export function UserProfileDropdown() {
           {/* User Summary Header */}
           <div className="p-4 bg-slate-50/80 border-b border-slate-100">
             <div className="flex items-center gap-3">
-              <img
+              <Avatar
                 src={currentUser.avatar}
-                alt={currentUser.name}
-                className="w-10 h-10 rounded-full object-cover border border-slate-200"
+                name={currentUser.name}
+                role={currentUser.role}
+                size="md"
+                className="w-10 h-10"
               />
               <div className="min-w-0">
                 <p className="text-xs font-bold text-navy truncate">{currentUser.name}</p>
@@ -104,7 +109,13 @@ export function UserProfileDropdown() {
                     )}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-slate-300" style={{ backgroundColor: isActive ? '#2563EB' : undefined }} />
+                      <Avatar
+                        src={account.avatar}
+                        name={account.name}
+                        role={account.role}
+                        size="xs"
+                        className="w-5 h-5 text-[8px]"
+                      />
                       <span>{account.role}</span>
                     </div>
                     {isActive && <Check className="w-3.5 h-3.5 text-primary-600" />}
@@ -141,3 +152,4 @@ export function UserProfileDropdown() {
     </div>
   );
 }
+

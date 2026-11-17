@@ -4,7 +4,7 @@ export const INITIAL_ACTIVITIES = [
     timestamp: '2026-11-17T11:45:00Z',
     userName: 'Sarah Jenkins, RN',
     userRole: 'Claims Reviewer',
-    userAvatar: 'https://images.unsplash.com/photo-1594824813589-8d145e14f6b1?auto=format&fit=crop&q=80&w=150',
+    userAvatar: null,
     category: 'Approvals',
     action: 'Approved Claim',
     claimId: 'CLM-2026-8911',
@@ -52,7 +52,7 @@ export const INITIAL_ACTIVITIES = [
     timestamp: '2026-11-17T09:20:00Z',
     userName: 'Sarah Jenkins, RN',
     userRole: 'Claims Reviewer',
-    userAvatar: 'https://images.unsplash.com/photo-1594824813589-8d145e14f6b1?auto=format&fit=crop&q=80&w=150',
+    userAvatar: null,
     category: 'Approvals',
     action: 'Requested Provider Correction',
     claimId: 'CLM-2026-8912',
@@ -96,3 +96,4 @@ export const INITIAL_ACTIVITIES = [
     severity: 'info',
   }
 ];
+

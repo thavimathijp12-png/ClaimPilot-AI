@@ -1,6 +1,7 @@
 import React from 'react';
 import { formatRelativeTime } from '../../utils/formatters';
 import { FileText, CheckCircle2, AlertTriangle, AlertCircle, Sparkles, Shield, User } from 'lucide-react';
+import { Avatar } from './Avatar';
 import { cn } from '../../utils/cn';
 
 export function ActivityTimeline({ activities = [], limit, className = '', onClaimClick }) {
@@ -64,14 +65,14 @@ export function ActivityTimeline({ activities = [], limit, className = '', onCla
               </p>
 
               <div className="flex items-center gap-2 mt-1.5 text-[11px] text-slate-400">
-                <span className="font-medium text-slate-700 flex items-center gap-1">
-                  {act.userAvatar && (
-                    <img
-                      src={act.userAvatar}
-                      alt={act.userName}
-                      className="w-3.5 h-3.5 rounded-full object-cover"
-                    />
-                  )}
+                <span className="font-medium text-slate-700 flex items-center gap-1.5">
+                  <Avatar
+                    src={act.userAvatar}
+                    name={act.userName}
+                    role={act.userRole}
+                    size="xs"
+                    className="w-4 h-4 text-[7px]"
+                  />
                   {act.userName}
                 </span>
                 <span>•</span>
@@ -96,3 +97,4 @@ export function ActivityTimeline({ activities = [], limit, className = '', onCla
     </div>
   );
 }
+

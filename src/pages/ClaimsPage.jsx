@@ -19,10 +19,12 @@ import { SearchInput } from '../components/common/SearchInput';
 import { FilterBar } from '../components/common/FilterBar';
 import { Pagination } from '../components/common/Pagination';
 import { StatusBadge } from '../components/common/StatusBadge';
+import Tooltip from '../components/common/Tooltip';
 import { Modal } from '../components/common/Modal';
 import { FormField } from '../components/common/FormField';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { exportToCSV } from '../services/exportService';
+import { validateClaimForm } from '../utils/validators';
 
 export function ClaimsPage() {
   const { claims, createClaim, updateClaim } = useClaims();
@@ -122,19 +124,16 @@ export function ClaimsPage() {
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    const errors = {};
 
-    if (!formData.claimantName.trim()) errors.claimantName = 'Synthetic claimant name is required.';
-    if (!formData.policyNumber.trim()) errors.policyNumber = 'Policy reference is required.';
-    if (!formData.hospitalName.trim()) errors.hospitalName = 'Healthcare provider/hospital name is required.';
-    if (!formData.claimAmount || isNaN(Number(formData.claimAmount)) || Number(formData.claimAmount) <= 0) {
-      errors.claimAmount = 'Please enter a valid positive claim amount.';
-    }
-
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
+    const validation = validateClaimForm(formData);
+    if (!validation.success) {
+      setFormErrors(validation.errors);
+      const firstError = Object.values(validation.errors)[0];
+      toast.warning('Validation Required', firstError || 'Please correct the highlighted fields.');
       return;
     }
+
+    setFormErrors({});
 
     if (editingClaim) {
       updateClaim(editingClaim.id, {
@@ -288,9 +287,14 @@ export function ClaimsPage() {
       sortable: true,
       align: 'center',
       render: (val) => (
-        <span className="inline-block px-2 py-0.5 text-[11px] font-bold rounded-full bg-teal-50 text-teal-700 border border-teal-200">
-          {val}%
-        </span>
+        <Tooltip
+          content={`Data quality validation: ${val >= 90 ? 'High Confidence (Clean pass)' : val >= 75 ? 'Moderate Risk (Requires manual verification)' : 'High Risk (Discrepancies flagged)'}`}
+          position="top"
+        >
+          <span className="inline-block px-2 py-0.5 text-[11px] font-bold rounded-full bg-teal-50 text-teal-700 border border-teal-200 cursor-help">
+            {val}%
+          </span>
+        </Tooltip>
       ),
     },
     {
@@ -299,22 +303,26 @@ export function ClaimsPage() {
       align: 'right',
       render: (_, row) => (
         <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-          <button
-            type="button"
-            onClick={() => navigate(`/claims/${row.id}`)}
-            className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-            title="Inspect Claim Details"
-          >
-            <Eye className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={(e) => handleOpenEditModal(row, e)}
-            className="p-1.5 text-slate-400 hover:text-navy hover:bg-slate-100 rounded-lg transition-colors"
-            title="Edit Claim"
-          >
-            <Edit2 className="w-3.5 h-3.5" />
-          </button>
+          <Tooltip content="Inspect Claim 360°" position="top">
+            <button
+              type="button"
+              onClick={() => navigate(`/claims/${row.id}`)}
+              className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+              aria-label="Inspect Claim Details"
+            >
+              <Eye className="w-4 h-4" />
+            </button>
+          </Tooltip>
+          <Tooltip content="Edit Claim Record" position="top">
+            <button
+              type="button"
+              onClick={(e) => handleOpenEditModal(row, e)}
+              className="p-1.5 text-slate-400 hover:text-navy hover:bg-slate-100 rounded-lg transition-colors"
+              aria-label="Edit Claim"
+            >
+              <Edit2 className="w-3.5 h-3.5" />
+            </button>
+          </Tooltip>
         </div>
       ),
     },
@@ -561,7 +569,7 @@ export function ClaimsPage() {
               />
             </FormField>
 
-            <FormField label="Discharge Date">
+            <FormField label="Discharge Date" error={formErrors.dischargeDate}>
               <input
                 type="date"
                 value={formData.dischargeDate}
@@ -585,3 +593,4 @@ export function ClaimsPage() {
     </div>
   );
 }
+

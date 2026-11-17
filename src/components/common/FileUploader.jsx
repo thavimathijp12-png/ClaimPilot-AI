@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { UploadCloud, File, CheckCircle2, AlertCircle, X, RefreshCw } from 'lucide-react';
 import { formatFileSize } from '../../utils/formatters';
+import { validateDocumentUpload } from '../../utils/validators';
 import { cn } from '../../utils/cn';
 
 export function FileUploader({
@@ -39,14 +40,16 @@ export function FileUploader({
     setError('');
     if (!file) return;
 
-    const fileExt = '.' + file.name.split('.').pop().toLowerCase();
-    if (!acceptedTypes.includes(fileExt)) {
-      setError(`Unsupported file format. Please upload PDF, PNG or JPG.`);
-      return;
-    }
+    // Validate using Zod schema
+    const validation = validateDocumentUpload({
+      name: file.name,
+      sizeBytes: file.size,
+      category: category,
+      claimId: claimId || 'CLM-2026-8910',
+    });
 
-    if (file.size > maxSizeBytes) {
-      setError(`File is too large (${formatFileSize(file.size)}). Maximum allowed size is ${formatFileSize(maxSizeBytes)}.`);
+    if (!validation.success) {
+      setError(validation.error);
       return;
     }
 
@@ -228,3 +231,4 @@ export function FileUploader({
     </div>
   );
 }
+

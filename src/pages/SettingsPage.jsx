@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '../components/common/PageHeader';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
+import { Avatar } from '../components/common/Avatar';
 
 export function SettingsPage() {
   const { currentUser, switchRole, demoAccounts } = useAuth();
@@ -116,10 +117,12 @@ export function SettingsPage() {
       {activeTab === 'profile' && (
         <div className="bg-white p-6 rounded-xl border border-slate-200/90 shadow-subtle max-w-3xl space-y-6">
           <div className="flex items-center gap-4 pb-6 border-b border-slate-100">
-            <img
+            <Avatar
               src={currentUser?.avatar}
-              alt={currentUser?.name}
-              className="w-16 h-16 rounded-full object-cover border-2 border-primary-500/20"
+              name={currentUser?.name}
+              role={currentUser?.role}
+              size="xl"
+              className="w-16 h-16 border-2 border-primary-500/20 shadow-sm"
             />
             <div>
               <h2 className="text-base font-bold text-navy">{currentUser?.name}</h2>
@@ -341,3 +344,4 @@ export function SettingsPage() {
     </div>
   );
 }
+

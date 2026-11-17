@@ -187,3 +187,4 @@ export function GlobalSearchModal({ isOpen, onClose }) {
     </div>
   );
 }
+
