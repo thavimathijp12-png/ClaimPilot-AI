@@ -15,8 +15,15 @@ export function DataTable({
   isLoading = false,
   emptyTitle = 'No records found',
   emptyDescription = 'No data matching your current filters or criteria.',
+  density = 'comfortable',
   className = '',
 }) {
+  const cellPadding = {
+    compact: 'px-3 py-1.5 text-[11px]',
+    comfortable: 'px-4 py-3 text-xs',
+    spacious: 'px-5 py-4 text-sm',
+  }[density] || 'px-4 py-3 text-xs';
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-xl border border-slate-200 p-12">
@@ -96,7 +103,8 @@ export function DataTable({
                     <td
                       key={`${rowKey}-${col.key}`}
                       className={cn(
-                        'px-4 py-3 text-slate-700 whitespace-nowrap',
+                        cellPadding,
+                        'text-slate-700 whitespace-nowrap',
                         col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left',
                         col.cellClassName
                       )}
