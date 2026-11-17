@@ -12,6 +12,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   RotateCcw,
+  Copy,
+  ShieldCheck,
 } from 'lucide-react';
 import { PageHeader } from '../components/common/PageHeader';
 import { DataTable } from '../components/common/DataTable';
@@ -20,6 +22,7 @@ import { FilterBar } from '../components/common/FilterBar';
 import { Pagination } from '../components/common/Pagination';
 import { StatusBadge } from '../components/common/StatusBadge';
 import Tooltip from '../components/common/Tooltip';
+import DropdownMenu from '../components/common/DropdownMenu';
 import { Modal } from '../components/common/Modal';
 import { FormField } from '../components/common/FormField';
 import { formatCurrency, formatDate } from '../utils/formatters';
@@ -323,6 +326,33 @@ export function ClaimsPage() {
               <Edit2 className="w-3.5 h-3.5" />
             </button>
           </Tooltip>
+          <DropdownMenu
+            align="right"
+            items={[
+              {
+                id: 'inspect',
+                label: '360° Investigation',
+                icon: Eye,
+                onClick: () => navigate(`/claims/${row.id}`),
+              },
+              {
+                id: 'dataguard',
+                label: 'DataGuard IQ Audit',
+                icon: ShieldCheck,
+                onClick: () => navigate('/dataguard'),
+              },
+              { divider: true },
+              {
+                id: 'copy-id',
+                label: 'Copy Claim ID',
+                icon: Copy,
+                onClick: () => {
+                  navigator.clipboard.writeText(row.id);
+                  toast.success('Copied', `Claim ID ${row.id} copied to clipboard.`);
+                },
+              },
+            ]}
+          />
         </div>
       ),
     },

@@ -18,6 +18,7 @@ import {
 import { PageHeader } from '../components/common/PageHeader';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { Avatar } from '../components/common/Avatar';
+import Tabs from '../components/common/Tabs';
 
 export function SettingsPage() {
   const { currentUser, switchRole, demoAccounts } = useAuth();
@@ -51,6 +52,13 @@ export function SettingsPage() {
     setShowResetModal(false);
   };
 
+  const settingsTabs = [
+    { id: 'profile', label: 'User Profile', icon: User },
+    { id: 'notifications', label: 'Notifications & Alerts', icon: Bell },
+    { id: 'security', label: 'Security & Roles', icon: Shield },
+    { id: 'demo', label: 'Demo Data Management', icon: Sliders },
+  ];
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -59,59 +67,12 @@ export function SettingsPage() {
       />
 
       {/* Settings Navigation Tabs */}
-      <div className="flex border-b border-slate-200 text-xs font-semibold gap-6">
-        <button
-          type="button"
-          onClick={() => setActiveTab('profile')}
-          className={`pb-3 flex items-center gap-2 border-b-2 transition-all ${
-            activeTab === 'profile'
-              ? 'border-primary-600 text-primary-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <User className="w-4 h-4" />
-          <span>User Profile</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('notifications')}
-          className={`pb-3 flex items-center gap-2 border-b-2 transition-all ${
-            activeTab === 'notifications'
-              ? 'border-primary-600 text-primary-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Bell className="w-4 h-4" />
-          <span>Notifications & Alerts</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('security')}
-          className={`pb-3 flex items-center gap-2 border-b-2 transition-all ${
-            activeTab === 'security'
-              ? 'border-primary-600 text-primary-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Shield className="w-4 h-4" />
-          <span>Security & Roles</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('demo')}
-          className={`pb-3 flex items-center gap-2 border-b-2 transition-all ${
-            activeTab === 'demo'
-              ? 'border-primary-600 text-primary-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Sliders className="w-4 h-4" />
-          <span>Demo Data Management</span>
-        </button>
-      </div>
+      <Tabs
+        tabs={settingsTabs}
+        activeTab={activeTab}
+        onChange={setActiveTab}
+        variant="underline"
+      />
 
       {/* Tab 1: Profile */}
       {activeTab === 'profile' && (
