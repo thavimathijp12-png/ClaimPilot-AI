@@ -23,6 +23,7 @@ import { Pagination } from '../components/common/Pagination';
 import { StatusBadge } from '../components/common/StatusBadge';
 import Tooltip from '../components/common/Tooltip';
 import DropdownMenu from '../components/common/DropdownMenu';
+import DensityToggle from '../components/common/DensityToggle';
 import { Modal } from '../components/common/Modal';
 import { FormField } from '../components/common/FormField';
 import { formatCurrency, formatDate } from '../utils/formatters';
@@ -43,6 +44,14 @@ export function ClaimsPage() {
   const [sortDirection, setSortDirection] = useState('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
+  const [density, setDensity] = useState(
+    () => localStorage.getItem('claimpilot_table_density') || 'comfortable'
+  );
+
+  const handleDensityChange = (newDensity) => {
+    setDensity(newDensity);
+    localStorage.setItem('claimpilot_table_density', newDensity);
+  };
 
   // Modal State: Create / Edit
   const [modalOpen, setModalOpen] = useState(searchParams.get('action') === 'create');
@@ -398,46 +407,49 @@ export function ClaimsPage() {
           className="lg:max-w-md"
         />
 
-        <FilterBar
-          hasActiveFilters={statusFilter !== 'ALL' || typeFilter !== 'ALL' || Boolean(searchQuery)}
-          onReset={resetFilters}
-          filters={[
-            {
-              id: 'status',
-              label: 'Claim Status',
-              value: statusFilter,
-              onChange: (val) => {
-                setStatusFilter(val);
-                setCurrentPage(1);
+        <div className="flex items-center gap-2.5 flex-wrap justify-between lg:justify-end">
+          <FilterBar
+            hasActiveFilters={statusFilter !== 'ALL' || typeFilter !== 'ALL' || Boolean(searchQuery)}
+            onReset={resetFilters}
+            filters={[
+              {
+                id: 'status',
+                label: 'Claim Status',
+                value: statusFilter,
+                onChange: (val) => {
+                  setStatusFilter(val);
+                  setCurrentPage(1);
+                },
+                options: [
+                  { label: 'All Statuses', value: 'ALL' },
+                  { label: 'Pending Review', value: 'Pending Review' },
+                  { label: 'Approved', value: 'Approved' },
+                  { label: 'Correction Requested', value: 'Correction Requested' },
+                  { label: 'Under AI Audit', value: 'Under AI Audit' },
+                  { label: 'Rejected', value: 'Rejected' },
+                ],
               },
-              options: [
-                { label: 'All Statuses', value: 'ALL' },
-                { label: 'Pending Review', value: 'Pending Review' },
-                { label: 'Approved', value: 'Approved' },
-                { label: 'Correction Requested', value: 'Correction Requested' },
-                { label: 'Under AI Audit', value: 'Under AI Audit' },
-                { label: 'Rejected', value: 'Rejected' },
-              ],
-            },
-            {
-              id: 'type',
-              label: 'Encounter Type',
-              value: typeFilter,
-              onChange: (val) => {
-                setTypeFilter(val);
-                setCurrentPage(1);
+              {
+                id: 'type',
+                label: 'Encounter Type',
+                value: typeFilter,
+                onChange: (val) => {
+                  setTypeFilter(val);
+                  setCurrentPage(1);
+                },
+                options: [
+                  { label: 'All Claim Types', value: 'ALL' },
+                  { label: 'Inpatient Care', value: 'Inpatient' },
+                  { label: 'Outpatient Care', value: 'Outpatient' },
+                  { label: 'Emergency Room', value: 'Emergency' },
+                  { label: 'Pharmacy', value: 'Pharmacy' },
+                  { label: 'Specialist Consultation', value: 'Specialist Consultation' },
+                ],
               },
-              options: [
-                { label: 'All Claim Types', value: 'ALL' },
-                { label: 'Inpatient Care', value: 'Inpatient' },
-                { label: 'Outpatient Care', value: 'Outpatient' },
-                { label: 'Emergency Room', value: 'Emergency' },
-                { label: 'Pharmacy', value: 'Pharmacy' },
-                { label: 'Specialist Consultation', value: 'Specialist Consultation' },
-              ],
-            },
-          ]}
-        />
+            ]}
+          />
+          <DensityToggle density={density} onChange={handleDensityChange} />
+        </div>
       </div>
 
       {/* Claims Data Table */}
@@ -448,6 +460,7 @@ export function ClaimsPage() {
         sortDirection={sortDirection}
         onSort={handleSort}
         onRowClick={(row) => navigate(`/claims/${row.id}`)}
+        density={density}
         emptyTitle="No claims match your search criteria"
         emptyDescription="Try clearing filters or search terms to display available healthcare claims."
       />
