@@ -95,3 +95,46 @@ export function validateClaimForm(formData) {
 
   return { success: true, data: result.data, errors: {} };
 }
+
+export const documentCategoryEnum = z.enum([
+  'Hospital Bill',
+  'Discharge Summary',
+  'Prescription',
+  'Claim Form',
+  'Other Supporting Documents',
+]);
+
+export const documentFileTypeEnum = z.enum(['PDF', 'PNG', 'JPG', 'JPEG']);
+
+export const documentUploadSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(3, { message: 'File name must be at least 3 characters.' })
+    .regex(/\.(pdf|png|jpe?g)$/i, {
+      message: 'File extension must be .pdf, .png, or .jpg/.jpeg.',
+    }),
+  category: documentCategoryEnum,
+  sizeBytes: z
+    .number()
+    .positive({ message: 'File size must be greater than 0 bytes.' })
+    .max(15 * 1024 * 1024, { message: 'File exceeds maximum limit of 15 MB.' }),
+  claimId: z.string().trim().min(5, { message: 'Linked claim identifier is required.' }),
+  description: z.string().max(300, { message: 'Description cannot exceed 300 characters.' }).optional(),
+});
+
+/**
+ * Validates document metadata prior to upload processing using Zod.
+ * @param {Object} docData
+ * @returns {{ success: boolean, data?: Object, error?: string }}
+ */
+export function validateDocumentUpload(docData) {
+  const result = documentUploadSchema.safeParse(docData);
+  if (!result.success) {
+    return {
+      success: false,
+      error: result.error.issues[0]?.message || 'Invalid document metadata.',
+    };
+  }
+  return { success: true, data: result.data };
+}
