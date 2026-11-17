@@ -23,6 +23,7 @@ import { Modal } from '../components/common/Modal';
 import { FormField } from '../components/common/FormField';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { exportToCSV } from '../services/exportService';
+import { validateClaimForm } from '../utils/validators';
 
 export function ClaimsPage() {
   const { claims, createClaim, updateClaim } = useClaims();
@@ -122,19 +123,16 @@ export function ClaimsPage() {
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    const errors = {};
 
-    if (!formData.claimantName.trim()) errors.claimantName = 'Synthetic claimant name is required.';
-    if (!formData.policyNumber.trim()) errors.policyNumber = 'Policy reference is required.';
-    if (!formData.hospitalName.trim()) errors.hospitalName = 'Healthcare provider/hospital name is required.';
-    if (!formData.claimAmount || isNaN(Number(formData.claimAmount)) || Number(formData.claimAmount) <= 0) {
-      errors.claimAmount = 'Please enter a valid positive claim amount.';
-    }
-
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
+    const validation = validateClaimForm(formData);
+    if (!validation.success) {
+      setFormErrors(validation.errors);
+      const firstError = Object.values(validation.errors)[0];
+      toast.warning('Validation Required', firstError || 'Please correct the highlighted fields.');
       return;
     }
+
+    setFormErrors({});
 
     if (editingClaim) {
       updateClaim(editingClaim.id, {
@@ -561,7 +559,7 @@ export function ClaimsPage() {
               />
             </FormField>
 
-            <FormField label="Discharge Date">
+            <FormField label="Discharge Date" error={formErrors.dischargeDate}>
               <input
                 type="date"
                 value={formData.dischargeDate}
