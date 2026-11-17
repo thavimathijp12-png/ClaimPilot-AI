@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { Activity, Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowRight, UserCheck } from 'lucide-react';
+import { Avatar } from '../components/common/Avatar';
 import { cn } from '../utils/cn';
 
 export function LoginPage() {
@@ -195,10 +196,12 @@ export function LoginPage() {
                   className="w-full p-2.5 rounded-xl border border-slate-200 hover:border-primary-400 hover:bg-primary-50/30 transition-all text-left flex items-center justify-between group"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <img
+                    <Avatar
                       src={account.avatar}
-                      alt={account.name}
-                      className="w-8 h-8 rounded-full object-cover border border-slate-200"
+                      name={account.name}
+                      role={account.role}
+                      size="sm"
+                      className="w-8 h-8"
                     />
                     <div className="min-w-0">
                       <p className="text-xs font-bold text-navy group-hover:text-primary-700 truncate">
@@ -269,3 +272,4 @@ export function LoginPage() {
     </div>
   );
 }
+

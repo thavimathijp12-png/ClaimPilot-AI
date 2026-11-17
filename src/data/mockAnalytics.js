@@ -41,3 +41,4 @@ export const DOCUMENT_PROCESSING_METRICS = {
     { category: 'Other Supporting Docs', count: 390, avgPages: 2.4 }
   ]
 };
+

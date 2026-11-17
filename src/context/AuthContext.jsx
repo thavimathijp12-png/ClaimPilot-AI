@@ -5,10 +5,15 @@ import { storage } from '../services/storageService';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  // Default to Marcus Chen (Claims Operator) or stored user
+  // Default to Marcus Chen or Admin or stored user with refreshed avatar
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = storage.get('auth_user');
-    return saved || DEMO_ACCOUNTS[0]; // Admin by default so all features are visible
+    if (saved) {
+      const matched = DEMO_ACCOUNTS.find(u => u.id === saved.id || u.email === saved.email);
+      if (matched) return { ...saved, avatar: matched.avatar };
+      return saved;
+    }
+    return DEMO_ACCOUNTS[0]; // Admin by default so all features are visible
   });
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return Boolean(storage.get('auth_user', true)); // logged in by default for rapid review or can logout
@@ -87,3 +92,4 @@ export function useAuth() {
   }
   return context;
 }
+

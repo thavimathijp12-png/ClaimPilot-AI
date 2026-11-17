@@ -18,3 +18,4 @@ export function LoadingSpinner({ size = 'md', message = '', className = '' }) {
     </div>
   );
 }
+
