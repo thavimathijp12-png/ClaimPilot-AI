@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Menu, Search, Plus } from 'lucide-react';
+import { Menu, Search, Plus, Keyboard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Breadcrumbs } from './Breadcrumbs';
 import { NotificationDropdown } from './NotificationDropdown';
 import { UserProfileDropdown } from './UserProfileDropdown';
 import { GlobalSearchModal } from './GlobalSearchModal';
 
-export function AppTopbar({ onToggleSidebar }) {
+export function AppTopbar({ onToggleSidebar, onOpenShortcuts }) {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -41,6 +41,17 @@ export function AppTopbar({ onToggleSidebar }) {
             <kbd className="hidden lg:inline-block ml-1 px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-white border border-slate-200 rounded">
               ⌘K
             </kbd>
+          </button>
+
+          {/* Keyboard Shortcuts Trigger Button */}
+          <button
+            type="button"
+            onClick={onOpenShortcuts}
+            className="hidden sm:flex items-center justify-center w-8 h-8 text-slate-400 hover:text-navy hover:bg-slate-100 rounded-lg transition-colors border border-transparent hover:border-slate-200"
+            title="Keyboard Shortcuts (?)"
+            aria-label="View keyboard shortcuts"
+          >
+            <Keyboard className="w-4 h-4" />
           </button>
 
           {/* Quick Create Claim Button */}
