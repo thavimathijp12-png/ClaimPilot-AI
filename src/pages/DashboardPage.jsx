@@ -30,7 +30,7 @@ import { StatCard } from '../components/common/StatCard';
 import { ChartCard } from '../components/common/ChartCard';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { ActivityTimeline } from '../components/common/ActivityTimeline';
-import { formatCurrency, formatDate } from '../utils/formatters';
+import { formatCurrency } from '../utils/formatters';
 
 function getWindowStart(range, today) {
   const start = new Date(today);
