@@ -11,10 +11,15 @@ export function LoadingSpinner({ size = 'md', message = '', className = '' }) {
   };
 
   return (
-    <div className={cn('flex flex-col items-center justify-center p-4 gap-2 text-slate-500', className)} role="status">
+    <div
+      className={cn('flex flex-col items-center justify-center p-4 gap-2 text-slate-500', className)}
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
       <Loader2 className={cn('animate-spin text-primary-600', sizeMap[size] || sizeMap.md)} />
-      {message && <p className="text-xs font-medium text-slate-600">{message}</p>}
-      <span className="sr-only">Loading...</span>
+      {message && <p className="text-xs font-medium text-slate-600" aria-hidden="true">{message}</p>}
+      <span className="sr-only">{message || 'Loading...'}</span>
     </div>
   );
 }
