@@ -33,6 +33,7 @@ export function ClaimDetailsPage() {
   const claim = claims.find(c => c.id === id);
   const claimDocs = documents.filter(d => d.claimId === id);
   const validationData = validations[id] || null;
+  const canAdjudicate = claim && ['Pending Review', 'Under AI Audit'].includes(claim.status);
 
   // Decision Modal State
   const [decisionModal, setDecisionModal] = useState({
@@ -60,17 +61,30 @@ export function ClaimDetailsPage() {
   }
 
   const handleDecisionConfirm = (notesOrReason) => {
+    let updated = false;
     if (decisionModal.action === 'approve') {
-      approveClaim(claim.id, notesOrReason);
+      updated = approveClaim(claim.id, notesOrReason);
+    } else if (decisionModal.action === 'reject') {
+      updated = rejectClaim(claim.id, notesOrReason);
+    } else if (decisionModal.action === 'correction') {
+      updated = requestCorrection(claim.id, notesOrReason);
+    }
+
+    if (!updated) {
+      toast.warning('Decision Not Recorded', 'This claim is no longer awaiting adjudication. Refresh the record and try again.');
+      setDecisionModal({ isOpen: false, action: null });
+      return true;
+    }
+
+    if (decisionModal.action === 'approve') {
       toast.success('Claim Approved', `Claim ${claim.id} has been adjudicated and approved.`);
     } else if (decisionModal.action === 'reject') {
-      rejectClaim(claim.id, notesOrReason);
       toast.error('Claim Rejected', `Claim ${claim.id} has been denied.`);
-    } else if (decisionModal.action === 'correction') {
-      requestCorrection(claim.id, notesOrReason);
+    } else {
       toast.warning('Correction Requested', `Notice dispatched for ${claim.id}.`);
     }
     setDecisionModal({ isOpen: false, action: null });
+    return true;
   };
 
   const handleAddComment = (e) => {
@@ -126,7 +140,8 @@ export function ClaimDetailsPage() {
           <button
             type="button"
             onClick={() => setDecisionModal({ isOpen: true, action: 'correction' })}
-            className="px-3 py-1.5 text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors flex items-center gap-1.5"
+            disabled={!canAdjudicate}
+            className="px-3 py-1.5 text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed border border-amber-200 rounded-lg transition-colors flex items-center gap-1.5"
           >
             <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
             <span>Request Correction</span>
@@ -134,7 +149,8 @@ export function ClaimDetailsPage() {
           <button
             type="button"
             onClick={() => setDecisionModal({ isOpen: true, action: 'reject' })}
-            className="px-3 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors flex items-center gap-1.5"
+            disabled={!canAdjudicate}
+            className="px-3 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed border border-rose-200 rounded-lg transition-colors flex items-center gap-1.5"
           >
             <XCircle className="w-3.5 h-3.5 text-rose-600" />
             <span>Reject Claim</span>
@@ -142,7 +158,8 @@ export function ClaimDetailsPage() {
           <button
             type="button"
             onClick={() => setDecisionModal({ isOpen: true, action: 'approve' })}
-            className="px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
+            disabled={!canAdjudicate}
+            className="px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
           >
             <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Approve Claim</span>
