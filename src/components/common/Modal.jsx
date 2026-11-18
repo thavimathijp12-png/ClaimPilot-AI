@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useId } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
@@ -12,6 +12,9 @@ export function Modal({
   maxWidth = 'max-w-lg',
   className = '',
 }) {
+  const titleId = useId();
+  const subtitleId = useId();
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isOpen) {
@@ -37,6 +40,9 @@ export function Modal({
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy/60 backdrop-blur-sm animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
+      aria-labelledby={title ? titleId : undefined}
+      aria-label={title ? undefined : 'Dialog'}
+      aria-describedby={subtitle ? subtitleId : undefined}
       onClick={onClose}
     >
       <div
@@ -50,8 +56,8 @@ export function Modal({
         {/* Modal Header */}
         <div className="flex items-start justify-between p-5 border-b border-slate-100">
           <div>
-            {title && <h2 className="text-base sm:text-lg font-bold text-navy">{title}</h2>}
-            {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
+            {title && <h2 id={titleId} className="text-base sm:text-lg font-bold text-navy">{title}</h2>}
+            {subtitle && <p id={subtitleId} className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
           </div>
           <button
             type="button"

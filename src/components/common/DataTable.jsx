@@ -54,20 +54,28 @@ export function DataTable({
                   <th
                     key={col.key}
                     scope="col"
+                    aria-sort={
+                      canSort && isSorted
+                        ? sortDirection === 'asc' ? 'ascending' : 'descending'
+                        : undefined
+                    }
                     className={cn(
-                      'px-4 py-3 select-none',
+                      'px-4 py-3',
                       col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left',
-                      canSort && 'cursor-pointer hover:text-navy transition-colors',
                       col.className
                     )}
-                    onClick={() => canSort && onSort(col.key)}
                   >
-                    <div className={cn(
-                      'inline-flex items-center gap-1.5',
-                      col.align === 'right' && 'flex-row-reverse'
-                    )}>
-                      <span>{col.header}</span>
-                      {canSort && (
+                    {canSort ? (
+                      <button
+                        type="button"
+                        onClick={() => onSort(col.key)}
+                        aria-label={`Sort by ${col.header}`}
+                        className={cn(
+                          'inline-flex items-center gap-1.5 select-none hover:text-navy transition-colors',
+                          col.align === 'right' && 'flex-row-reverse'
+                        )}
+                      >
+                        <span>{col.header}</span>
                         <span className="text-slate-400">
                           {isSorted ? (
                             sortDirection === 'asc' ? (
@@ -79,8 +87,10 @@ export function DataTable({
                             <ArrowUpDown className="w-3 h-3 opacity-60" />
                           )}
                         </span>
-                      )}
-                    </div>
+                      </button>
+                    ) : (
+                      <span>{col.header}</span>
+                    )}
                   </th>
                 );
               })}
