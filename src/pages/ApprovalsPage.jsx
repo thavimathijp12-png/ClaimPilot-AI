@@ -38,24 +38,37 @@ export function ApprovalsPage() {
     (c) => c.status === 'Pending Review' || c.status === 'Under AI Audit'
   );
 
-  const activeClaim = claims.find((c) => c.id === (selectedClaimId || pendingClaims[0]?.id));
+  const activeClaim = pendingClaims.find((c) => c.id === selectedClaimId) || pendingClaims[0];
 
   const handleDecisionConfirm = (notesOrReason) => {
     const claimToAdjudicate = decisionModal.claimId;
-    if (!claimToAdjudicate) return;
-
-    if (decisionModal.action === 'approve') {
-      approveClaim(claimToAdjudicate, notesOrReason);
-      toast.success('Adjudication Approved', `Claim ${claimToAdjudicate} approved by ${currentUser?.name}.`);
-    } else if (decisionModal.action === 'reject') {
-      rejectClaim(claimToAdjudicate, notesOrReason);
-      toast.error('Claim Rejected', `Claim ${claimToAdjudicate} denied. Mandatory justification logged.`);
-    } else if (decisionModal.action === 'correction') {
-      requestCorrection(claimToAdjudicate, notesOrReason);
-      toast.warning('Correction Requested', `Instructions dispatched for claim ${claimToAdjudicate}.`);
+    if (!claimToAdjudicate) return false;
+    const isPending = pendingClaims.some((claim) => claim.id === claimToAdjudicate);
+    if (!isPending) {
+      toast.warning('Claim No Longer Pending', 'Refresh the queue before recording another decision.');
+      setDecisionModal({ isOpen: false, action: null, claimId: null });
+      return true;
     }
 
+    let updated = false;
+    if (decisionModal.action === 'approve') {
+      updated = approveClaim(claimToAdjudicate, notesOrReason);
+    } else if (decisionModal.action === 'reject') {
+      updated = rejectClaim(claimToAdjudicate, notesOrReason);
+    } else if (decisionModal.action === 'correction') {
+      updated = requestCorrection(claimToAdjudicate, notesOrReason);
+    }
+
+    if (!updated) return false;
+    if (decisionModal.action === 'approve') {
+      toast.success('Adjudication Approved', `Claim ${claimToAdjudicate} approved by ${currentUser?.name}.`);
+    } else if (decisionModal.action === 'reject') {
+      toast.error('Claim Rejected', `Claim ${claimToAdjudicate} denied. Mandatory justification logged.`);
+    } else {
+      toast.warning('Correction Requested', `Instructions dispatched for claim ${claimToAdjudicate}.`);
+    }
     setDecisionModal({ isOpen: false, action: null, claimId: null });
+    return true;
   };
 
   return (
@@ -123,6 +136,15 @@ export function ApprovalsPage() {
                   <div
                     key={claim.id}
                     onClick={() => setSelectedClaimId(claim.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedClaimId(claim.id);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isSelected}
                     className={`p-4 cursor-pointer transition-all text-xs ${
                       isSelected
                         ? 'bg-primary-50/40 border-l-4 border-primary-600'

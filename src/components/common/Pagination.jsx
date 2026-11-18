@@ -14,7 +14,6 @@ export function Pagination({
 
   const safeTotalPages = Math.max(1, totalPages);
   const safeCurrentPage = Math.min(Math.max(1, currentPage), safeTotalPages);
-
   const startItem = (safeCurrentPage - 1) * pageSize + 1;
   const endItem = Math.min(safeCurrentPage * pageSize, totalItems);
 
@@ -63,6 +62,8 @@ export function Pagination({
                         ? 'bg-primary-600 text-white shadow-sm'
                         : 'text-slate-600 hover:bg-slate-100'
                     )}
+                    aria-current={safeCurrentPage === page ? 'page' : undefined}
+                    aria-label={`Go to page ${page}`}
                   >
                     {page}
                   </button>

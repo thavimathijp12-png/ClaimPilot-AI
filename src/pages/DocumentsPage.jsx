@@ -6,17 +6,11 @@ import {
   FileText,
   UploadCloud,
   Search,
-  Filter,
   Eye,
   Trash2,
   Sparkles,
-  CheckCircle2,
-  AlertTriangle,
-  Download,
-  ExternalLink,
   ZoomIn,
   ZoomOut,
-  FileCheck,
 } from 'lucide-react';
 import { PageHeader } from '../components/common/PageHeader';
 import { FileUploader } from '../components/common/FileUploader';
@@ -26,7 +20,7 @@ import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { formatFileSize, formatDate } from '../utils/formatters';
 
 export function DocumentsPage() {
-  const { documents, claims, uploadDocument, deleteDocument, updateDocument } = useClaims();
+  const { documents, claims, uploadDocument, deleteDocument } = useClaims();
   const toast = useToast();
   const navigate = useNavigate();
 
@@ -34,7 +28,7 @@ export function DocumentsPage() {
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [selectedClaimForUpload, setSelectedClaimForUpload] = useState(claims[0]?.id || 'CLM-2026-8910');
+  const [selectedClaimForUpload, setSelectedClaimForUpload] = useState(() => claims[0]?.id || '');
 
   // Preview Modal
   const [previewDoc, setPreviewDoc] = useState(null);
@@ -56,7 +50,7 @@ export function DocumentsPage() {
       ...fileMeta,
       claimId: selectedClaimForUpload,
     });
-    toast.success('Document Ingested', `File "${doc.name}" queued for OCR extraction.`);
+    toast.success('Document Uploaded', `File "${doc.name}" is ready for simulated extraction review.`);
     setShowUploadModal(false);
   };
 
@@ -92,7 +86,9 @@ export function DocumentsPage() {
           <button
             type="button"
             onClick={() => setShowUploadModal(true)}
-            className="px-3.5 py-2 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
+            disabled={claims.length === 0}
+            title={claims.length === 0 ? 'Create a claim before uploading documents' : undefined}
+            className="px-3.5 py-2 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
           >
             <UploadCloud className="w-4 h-4 stroke-[2]" />
             <span>Upload Documents</span>
@@ -189,7 +185,9 @@ export function DocumentsPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span>OCR Confidence:</span>
-                  <span className="font-semibold text-teal-700">{doc.confidenceScore}%</span>
+                  <span className="font-semibold text-teal-700">
+                    {Number.isFinite(doc.confidenceScore) ? `${doc.confidenceScore}%` : 'Not processed'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -257,8 +255,10 @@ export function DocumentsPage() {
             <select
               value={selectedClaimForUpload}
               onChange={(e) => setSelectedClaimForUpload(e.target.value)}
+              disabled={claims.length === 0}
               className="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
             >
+              {claims.length === 0 && <option value="">No claims available</option>}
               {claims.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.id} — {c.claimantName} ({c.hospitalName})
@@ -308,7 +308,6 @@ export function DocumentsPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    const docToReview = previewDoc;
                     setPreviewDoc(null);
                     navigate('/extraction');
                   }}

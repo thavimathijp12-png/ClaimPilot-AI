@@ -11,7 +11,10 @@ export function formatCurrency(amount, options = {}) {
 
 export function formatDate(dateStr, includeTime = false) {
   if (!dateStr) return '—';
-  const date = new Date(dateStr);
+  const dateValue = typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)
+    ? `${dateStr}T00:00:00`
+    : dateStr;
+  const date = new Date(dateValue);
   if (isNaN(date.getTime())) return dateStr;
 
   const options = {
@@ -43,6 +46,7 @@ export function formatRelativeTime(dateStr) {
   const now = new Date();
   const diffInSeconds = Math.floor((now - date) / 1000);
 
+  if (diffInSeconds < 0) return formatDate(dateStr, true);
   if (diffInSeconds < 60) return 'Just now';
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) return `${diffInMinutes}m ago`;

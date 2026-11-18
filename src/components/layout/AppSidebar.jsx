@@ -20,7 +20,9 @@ import { cn } from '../../utils/cn';
 export function AppSidebar({ isOpen, onClose }) {
   const { claims, dataGuardSummary } = useClaims();
 
-  const pendingApprovalsCount = claims.filter(c => c.status === 'Pending Review').length;
+  const pendingApprovalsCount = claims.filter(
+    (claim) => claim.status === 'Pending Review' || claim.status === 'Under AI Audit'
+  ).length;
 
   const navGroups = [
     {
@@ -71,19 +73,22 @@ export function AppSidebar({ isOpen, onClose }) {
     <>
       {/* Mobile Backdrop */}
       {isOpen && (
-        <div
-          className="fixed inset-0 bg-navy/70 z-40 lg:hidden backdrop-blur-xs animate-in fade-in"
+        <button
+          type="button"
+          className="fixed inset-0 bg-navy/70 z-40 lg:hidden backdrop-blur-xs animate-in fade-in cursor-default"
           onClick={onClose}
-          aria-hidden="true"
+          aria-label="Close navigation menu"
         />
       )}
 
       {/* Sidebar container */}
       <aside
+        id="app-sidebar"
         className={cn(
-          'fixed top-0 bottom-0 left-0 z-40 w-64 bg-navy text-slate-300 flex flex-col transition-transform duration-200 ease-in-out border-r border-navy-light/40 shadow-xl lg:shadow-none lg:translate-x-0',
+          'fixed top-0 bottom-0 left-0 z-40 w-64 max-w-[85vw] bg-navy text-slate-300 flex flex-col transition-transform duration-200 ease-in-out border-r border-navy-light/40 shadow-xl lg:shadow-none lg:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
+        aria-label="Primary navigation"
       >
         {/* Brand Header */}
         <div className="h-16 flex items-center justify-between px-5 border-b border-navy-light/40 bg-navy-dark/40">
@@ -111,7 +116,7 @@ export function AppSidebar({ isOpen, onClose }) {
         </div>
 
         {/* Navigation list */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-4 space-y-6">
           {navGroups.map((group) => (
             <div key={group.title}>
               <div className="px-3 mb-2 text-[10px] font-bold text-slate-400 tracking-wider">
@@ -127,7 +132,7 @@ export function AppSidebar({ isOpen, onClose }) {
                       onClick={onClose}
                       className={({ isActive }) =>
                         cn(
-                          'flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all group',
+                          'flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
                           isActive
                             ? 'bg-primary-600 text-white shadow-sm font-semibold'
                             : 'text-slate-300 hover:bg-navy-light hover:text-white'

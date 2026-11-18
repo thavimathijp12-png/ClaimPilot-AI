@@ -14,7 +14,6 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  Upload,
   Plus,
   Send,
   ExternalLink,
@@ -27,12 +26,12 @@ import { formatCurrency, formatDate, formatRelativeTime, formatFileSize } from '
 export function ClaimDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { claims, documents, validations, approveClaim, rejectClaim, requestCorrection, updateClaim } = useClaims();
+  const { claims, documents, approveClaim, rejectClaim, requestCorrection, addClaimComment } = useClaims();
   const toast = useToast();
 
   const claim = claims.find(c => c.id === id);
   const claimDocs = documents.filter(d => d.claimId === id);
-  const validationData = validations[id] || null;
+  const canAdjudicate = claim && ['Pending Review', 'Under AI Audit'].includes(claim.status);
 
   // Decision Modal State
   const [decisionModal, setDecisionModal] = useState({
@@ -60,35 +59,37 @@ export function ClaimDetailsPage() {
   }
 
   const handleDecisionConfirm = (notesOrReason) => {
+    let updated = false;
     if (decisionModal.action === 'approve') {
-      approveClaim(claim.id, notesOrReason);
+      updated = approveClaim(claim.id, notesOrReason);
+    } else if (decisionModal.action === 'reject') {
+      updated = rejectClaim(claim.id, notesOrReason);
+    } else if (decisionModal.action === 'correction') {
+      updated = requestCorrection(claim.id, notesOrReason);
+    }
+
+    if (!updated) {
+      toast.warning('Decision Not Recorded', 'This claim is no longer awaiting adjudication. Refresh the record and try again.');
+      setDecisionModal({ isOpen: false, action: null });
+      return true;
+    }
+
+    if (decisionModal.action === 'approve') {
       toast.success('Claim Approved', `Claim ${claim.id} has been adjudicated and approved.`);
     } else if (decisionModal.action === 'reject') {
-      rejectClaim(claim.id, notesOrReason);
       toast.error('Claim Rejected', `Claim ${claim.id} has been denied.`);
-    } else if (decisionModal.action === 'correction') {
-      requestCorrection(claim.id, notesOrReason);
+    } else {
       toast.warning('Correction Requested', `Notice dispatched for ${claim.id}.`);
     }
     setDecisionModal({ isOpen: false, action: null });
+    return true;
   };
 
   const handleAddComment = (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
 
-    const newTimelineItem = {
-      id: `evt-${Date.now()}`,
-      date: new Date().toISOString(),
-      title: 'Reviewer Comment Added',
-      user: 'Sarah Jenkins, RN',
-      description: newComment.trim(),
-    };
-
-    updateClaim(claim.id, {
-      timeline: [newTimelineItem, ...(claim.timeline || [])],
-      reviewNotes: newComment.trim(),
-    });
+    if (!addClaimComment(claim.id, newComment)) return;
 
     setNewComment('');
     toast.info('Comment Appended', 'Audit note recorded on claim timeline.');
@@ -108,8 +109,8 @@ export function ClaimDetailsPage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-extrabold text-navy font-mono tracking-tight">{claim.id}</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-lg sm:text-xl font-extrabold text-navy font-mono tracking-tight break-all">{claim.id}</span>
               <StatusBadge status={claim.status} size="md" />
               <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-teal-50 text-teal-700 border border-teal-200">
                 DataGuard: {claim.dataQualityScore}%
@@ -126,7 +127,8 @@ export function ClaimDetailsPage() {
           <button
             type="button"
             onClick={() => setDecisionModal({ isOpen: true, action: 'correction' })}
-            className="px-3 py-1.5 text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors flex items-center gap-1.5"
+            disabled={!canAdjudicate}
+            className="px-3 py-1.5 text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed border border-amber-200 rounded-lg transition-colors flex items-center gap-1.5"
           >
             <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
             <span>Request Correction</span>
@@ -134,7 +136,8 @@ export function ClaimDetailsPage() {
           <button
             type="button"
             onClick={() => setDecisionModal({ isOpen: true, action: 'reject' })}
-            className="px-3 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors flex items-center gap-1.5"
+            disabled={!canAdjudicate}
+            className="px-3 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed border border-rose-200 rounded-lg transition-colors flex items-center gap-1.5"
           >
             <XCircle className="w-3.5 h-3.5 text-rose-600" />
             <span>Reject Claim</span>
@@ -142,7 +145,8 @@ export function ClaimDetailsPage() {
           <button
             type="button"
             onClick={() => setDecisionModal({ isOpen: true, action: 'approve' })}
-            className="px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
+            disabled={!canAdjudicate}
+            className="px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
           >
             <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Approve Claim</span>

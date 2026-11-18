@@ -3,17 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useClaims } from '../context/ClaimContext';
 import { useToast } from '../hooks/useToast';
 import {
-  Clock,
-  Search,
-  Filter,
   Download,
   Shield,
-  FileText,
-  User,
-  Sparkles,
-  CheckCircle2,
-  AlertTriangle,
-  RotateCcw,
 } from 'lucide-react';
 import { PageHeader } from '../components/common/PageHeader';
 import { SearchInput } from '../components/common/SearchInput';
@@ -30,8 +21,11 @@ export function ActivityHistoryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [severityFilter, setSeverityFilter] = useState('ALL');
+  const [timeRange, setTimeRange] = useState('ALL');
 
   const filteredActivities = useMemo(() => {
+    const now = Date.now();
+    const rangeMs = { '24h': 24 * 60 * 60 * 1000, '7d': 7 * 24 * 60 * 60 * 1000, '30d': 30 * 24 * 60 * 60 * 1000 }[timeRange];
     return activities.filter((act) => {
       const term = searchQuery.toLowerCase().trim();
       const matchesSearch =
@@ -43,10 +37,16 @@ export function ActivityHistoryPage() {
 
       const matchesCategory = categoryFilter === 'ALL' || act.category === categoryFilter;
       const matchesSeverity = severityFilter === 'ALL' || act.severity === severityFilter;
+      const timestamp = Date.parse(act.timestamp);
+      const matchesTime = !rangeMs || (
+        Number.isFinite(timestamp) &&
+        timestamp >= now - rangeMs &&
+        timestamp <= now
+      );
 
-      return matchesSearch && matchesCategory && matchesSeverity;
+      return matchesSearch && matchesCategory && matchesSeverity && matchesTime;
     });
-  }, [activities, searchQuery, categoryFilter, severityFilter]);
+  }, [activities, searchQuery, categoryFilter, severityFilter, timeRange]);
 
   const handleExportCSV = () => {
     const rows = filteredActivities.map(a => ({
@@ -68,6 +68,7 @@ export function ActivityHistoryPage() {
     setSearchQuery('');
     setCategoryFilter('ALL');
     setSeverityFilter('ALL');
+    setTimeRange('ALL');
   };
 
   return (
@@ -103,7 +104,7 @@ export function ActivityHistoryPage() {
         />
 
         <FilterBar
-          hasActiveFilters={categoryFilter !== 'ALL' || severityFilter !== 'ALL' || Boolean(searchQuery)}
+          hasActiveFilters={categoryFilter !== 'ALL' || severityFilter !== 'ALL' || timeRange !== 'ALL' || Boolean(searchQuery)}
           onReset={handleResetFilters}
           filters={[
             {
@@ -132,6 +133,18 @@ export function ActivityHistoryPage() {
                 { label: 'Informational', value: 'info' },
                 { label: 'Warnings', value: 'warning' },
                 { label: 'Errors / Denials', value: 'error' },
+              ],
+            },
+            {
+              id: 'timeRange',
+              label: 'Time Range',
+              value: timeRange,
+              onChange: setTimeRange,
+              options: [
+                { label: 'All Time', value: 'ALL' },
+                { label: 'Last 24 Hours', value: '24h' },
+                { label: 'Last 7 Days', value: '7d' },
+                { label: 'Last 30 Days', value: '30d' },
               ],
             },
           ]}
