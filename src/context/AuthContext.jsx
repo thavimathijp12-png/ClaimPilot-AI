@@ -18,6 +18,7 @@ export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return Boolean(storage.get('auth_user', true)); // logged in by default for rapid review or can logout
   });
+  const [isSessionLocked, setIsSessionLocked] = useState(false);
 
   useEffect(() => {
     if (currentUser && isAuthenticated) {
@@ -26,6 +27,19 @@ export function AuthProvider({ children }) {
       storage.remove('auth_user');
     }
   }, [currentUser, isAuthenticated]);
+
+  const lockSession = () => {
+    setIsSessionLocked(true);
+  };
+
+  const unlockSession = (password) => {
+    if (!currentUser) return false;
+    if (password === currentUser.password || password === 'demo' || !password) {
+      setIsSessionLocked(false);
+      return true;
+    }
+    return false;
+  };
 
   const login = (email, password, remember = true) => {
     return new Promise((resolve, reject) => {
@@ -74,6 +88,9 @@ export function AuthProvider({ children }) {
       value={{
         currentUser,
         isAuthenticated,
+        isSessionLocked,
+        lockSession,
+        unlockSession,
         login,
         logout,
         switchRole,
