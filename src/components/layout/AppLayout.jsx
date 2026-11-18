@@ -10,6 +10,15 @@ export function AppLayout() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (!sidebarOpen) return undefined;
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') setSidebarOpen(false);
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [sidebarOpen]);
+
   // Global keyboard shortcuts listener
   useEffect(() => {
     let pendingG = false;
@@ -83,12 +92,13 @@ export function AppLayout() {
       <div className="flex-1 flex flex-col min-w-0 lg:pl-64 transition-all">
         {/* Topbar */}
         <AppTopbar
-          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          sidebarOpen={sidebarOpen}
+          onToggleSidebar={() => setSidebarOpen((open) => !open)}
           onOpenShortcuts={() => setShortcutsOpen(true)}
         />
 
         {/* Page Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 min-w-0 p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
       </div>

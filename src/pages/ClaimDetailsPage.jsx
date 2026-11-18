@@ -111,8 +111,8 @@ export function ClaimDetailsPage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-extrabold text-navy font-mono tracking-tight">{claim.id}</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-lg sm:text-xl font-extrabold text-navy font-mono tracking-tight break-all">{claim.id}</span>
               <StatusBadge status={claim.status} size="md" />
               <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-teal-50 text-teal-700 border border-teal-200">
                 DataGuard: {claim.dataQualityScore}%

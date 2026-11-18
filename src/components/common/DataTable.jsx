@@ -43,7 +43,7 @@ export function DataTable({
   return (
     <div className={cn('bg-white rounded-xl border border-slate-200 shadow-subtle overflow-hidden', className)}>
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs border-collapse">
+        <table className="w-full min-w-[760px] text-left text-xs border-collapse">
           <thead>
             <tr className="bg-slate-50/80 border-b border-slate-200 text-content-muted font-semibold uppercase tracking-wider">
               {columns.map((col) => {
