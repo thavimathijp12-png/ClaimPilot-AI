@@ -85,6 +85,11 @@ export function ClaimsPage() {
     }
   }, [searchParams]);
 
+  // Reset pagination to first page whenever search query, status filter, or type filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, typeFilter]);
+
   const handleOpenCreateModal = () => {
     setEditingClaim(null);
     setFormData({
@@ -210,10 +215,24 @@ export function ClaimsPage() {
 
   // Pagination Slice
   const totalPages = Math.ceil(sortedClaims.length / pageSize) || 1;
+
+  // Ensure currentPage does not exceed totalPages when dataset shrinks
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   const paginatedClaims = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
+    const safePage = Math.max(1, Math.min(currentPage, totalPages));
+    const start = (safePage - 1) * pageSize;
     return sortedClaims.slice(start, start + pageSize);
-  }, [sortedClaims, currentPage, pageSize]);
+  }, [sortedClaims, currentPage, totalPages, pageSize]);
+
+  const handlePageChange = (page) => {
+    const safePage = Math.max(1, Math.min(page, totalPages));
+    setCurrentPage(safePage);
+  };
 
   const handleExportClaims = () => {
     const rows = sortedClaims.map(c => ({
@@ -471,7 +490,7 @@ export function ClaimsPage() {
         totalPages={totalPages}
         totalItems={sortedClaims.length}
         pageSize={pageSize}
-        onPageChange={(page) => setCurrentPage(page)}
+        onPageChange={handlePageChange}
       />
 
       {/* Create / Edit Claim Modal */}
