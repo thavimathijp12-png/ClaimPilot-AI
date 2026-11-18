@@ -291,16 +291,16 @@ export function ClaimProvider({ children }) {
     const newDocId = `DOC-${Date.now().toString().slice(-6)}`;
     const newDoc = {
       id: newDocId,
-      claimId: docData.claimId || 'CLM-2026-8910',
+      claimId: docData.claimId,
       name: docData.name,
       category: docData.category || 'Other Supporting Documents',
       fileType: docData.fileType || (docData.name.endsWith('.pdf') ? 'PDF' : docData.name.endsWith('.png') ? 'PNG' : 'JPG'),
       sizeBytes: docData.sizeBytes || 1450000,
       uploadedAt: new Date().toISOString(),
       uploadedBy: currentUser?.name || 'Marcus Chen',
-      status: 'Extracted',
+      status: 'Pending OCR',
       pageCount: docData.pageCount || 1,
-      confidenceScore: 97.5,
+      confidenceScore: null,
       previewUrl: docData.previewUrl || 'mock-document-preview',
       thumbnailType: docData.category === 'Hospital Bill' ? 'bill' : docData.category === 'Discharge Summary' ? 'summary' : docData.category === 'Prescription' ? 'rx' : 'form',
       description: docData.description || 'Uploaded supporting clinical document.'

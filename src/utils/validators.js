@@ -148,8 +148,15 @@ export const documentUploadSchema = z.object({
  * @param {Object} docData
  * @returns {{ success: boolean, data?: Object, error?: string }}
  */
-export function validateDocumentUpload(docData) {
-  const result = documentUploadSchema.safeParse(docData);
+export function validateDocumentUpload(docData, maxSizeBytes = 15 * 1024 * 1024) {
+  const uploadSchema = maxSizeBytes === 15 * 1024 * 1024
+    ? documentUploadSchema
+    : documentUploadSchema.extend({
+      sizeBytes: z.number()
+        .positive({ message: 'File size must be greater than 0 bytes.' })
+        .max(maxSizeBytes, { message: `File exceeds maximum limit of ${maxSizeBytes} bytes.` }),
+    });
+  const result = uploadSchema.safeParse(docData);
   if (!result.success) {
     return {
       success: false,
