@@ -224,11 +224,15 @@ export function DashboardPage() {
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
             <span>Intake Stream Active</span>
-            <span className="text-emerald-600/80 font-mono text-[10px]">({lastSynced})</span>
+            <span className="text-emerald-600/80 font-mono text-[10px]" aria-live="polite" aria-atomic="true">
+              {isRefreshing ? 'Synchronizing...' : `(${lastSynced})`}
+            </span>
             <button
               type="button"
               onClick={handleRefresh}
               disabled={isRefreshing}
+              aria-label={isRefreshing ? 'Synchronizing claims queue' : 'Synchronize claims queue'}
+              aria-busy={isRefreshing}
               title="Synchronize claims queue"
               className="ml-0.5 p-0.5 hover:bg-emerald-100 rounded transition-colors text-emerald-700"
             >
@@ -237,7 +241,11 @@ export function DashboardPage() {
           </div>
         </div>
 
-        <div className="inline-flex w-full max-w-full sm:w-auto items-center overflow-x-auto p-1 bg-slate-100 rounded-lg border border-slate-200/80 text-xs">
+        <div
+          className="inline-flex w-full max-w-full sm:w-auto items-center overflow-x-auto p-1 bg-slate-100 rounded-lg border border-slate-200/80 text-xs"
+          role="group"
+          aria-label="Filter dashboard by date range"
+        >
           {[
             { id: '7d', label: '7 Days' },
             { id: '30d', label: '30 Days' },
@@ -249,6 +257,7 @@ export function DashboardPage() {
               key={r.id}
               type="button"
               onClick={() => setDateRange(r.id)}
+              aria-pressed={dateRange === r.id}
               className={`shrink-0 whitespace-nowrap px-2.5 py-1 rounded-md font-semibold transition-all ${
                 dateRange === r.id
                   ? 'bg-white text-primary-700 shadow-2xs'
@@ -431,7 +440,11 @@ export function DashboardPage() {
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="inline-flex items-center p-0.5 bg-slate-100 rounded-lg border border-slate-200/80 text-xs">
+              <div
+                className="inline-flex items-center p-0.5 bg-slate-100 rounded-lg border border-slate-200/80 text-xs"
+                role="group"
+                aria-label="Filter claims queue"
+              >
                 {[
                   { id: 'all', label: 'All', count: queueCounts.all },
                   { id: 'pending', label: 'Pending', count: queueCounts.pending },
@@ -442,6 +455,7 @@ export function DashboardPage() {
                     key={tab.id}
                     type="button"
                     onClick={() => setQueueFilter(tab.id)}
+                    aria-pressed={queueFilter === tab.id}
                     className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all flex items-center gap-1 ${
                       queueFilter === tab.id
                         ? 'bg-white text-primary-700 shadow-2xs'
