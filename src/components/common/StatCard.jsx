@@ -37,26 +37,26 @@ export function StatCard({
     <div
       onClick={onClick}
       className={cn(
-        'p-5 rounded-xl border shadow-subtle card-hover transition-all relative overflow-hidden',
+        'p-3 sm:p-5 rounded-xl border shadow-subtle card-hover transition-all relative overflow-hidden',
         variantStyles,
         onClick && 'cursor-pointer',
         className
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-content-muted uppercase tracking-wider">{title}</span>
+        <span className="text-[10px] sm:text-xs font-medium text-content-muted uppercase tracking-wider">{title}</span>
         {Icon && (
-          <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0', iconColor)}>
-            <Icon className="w-5 h-5 stroke-[1.75]" />
+          <div className={cn('w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center flex-shrink-0', iconColor)}>
+            <Icon className="w-4 h-4 sm:w-5 sm:h-5 stroke-[1.75]" />
           </div>
         )}
       </div>
 
       <div className="mt-3 flex items-baseline gap-2">
-        <span className="text-2xl sm:text-3xl font-bold text-navy tracking-tight">{value}</span>
+        <span className="text-xl sm:text-3xl font-bold text-navy tracking-tight">{value}</span>
       </div>
 
-      <div className="mt-2.5 flex items-center gap-1.5 text-xs">
+      <div className="mt-2.5 flex items-center gap-1.5 text-[10px] sm:text-xs">
         {trend !== undefined && trend !== null && (
           <span
             className={cn(
