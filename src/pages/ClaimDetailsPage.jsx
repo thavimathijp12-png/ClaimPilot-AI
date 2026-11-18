@@ -27,7 +27,7 @@ import { formatCurrency, formatDate, formatRelativeTime, formatFileSize } from '
 export function ClaimDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { claims, documents, validations, approveClaim, rejectClaim, requestCorrection, updateClaim } = useClaims();
+  const { claims, documents, validations, approveClaim, rejectClaim, requestCorrection, addClaimComment } = useClaims();
   const toast = useToast();
 
   const claim = claims.find(c => c.id === id);
@@ -91,18 +91,7 @@ export function ClaimDetailsPage() {
     e.preventDefault();
     if (!newComment.trim()) return;
 
-    const newTimelineItem = {
-      id: `evt-${Date.now()}`,
-      date: new Date().toISOString(),
-      title: 'Reviewer Comment Added',
-      user: 'Sarah Jenkins, RN',
-      description: newComment.trim(),
-    };
-
-    updateClaim(claim.id, {
-      timeline: [newTimelineItem, ...(claim.timeline || [])],
-      reviewNotes: newComment.trim(),
-    });
+    if (!addClaimComment(claim.id, newComment)) return;
 
     setNewComment('');
     toast.info('Comment Appended', 'Audit note recorded on claim timeline.');
