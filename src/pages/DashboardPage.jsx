@@ -24,9 +24,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
   Legend,
 } from 'recharts';
 import { StatCard } from '../components/common/StatCard';
@@ -132,7 +129,6 @@ export function DashboardPage() {
   }, [claims, dateRange, filteredClaims]);
 
   const recentClaims = filteredClaims.slice(0, 5);
-  const pendingApprovals = filteredClaims.filter(c => c.status === 'Pending Review').slice(0, 3);
 
   const currentDateFormatted = new Date().toLocaleDateString('en-US', {
     weekday: 'long',

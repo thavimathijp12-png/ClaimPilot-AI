@@ -3,17 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useClaims } from '../context/ClaimContext';
 import { useToast } from '../hooks/useToast';
 import {
-  Clock,
-  Search,
-  Filter,
   Download,
   Shield,
-  FileText,
-  User,
-  Sparkles,
-  CheckCircle2,
-  AlertTriangle,
-  RotateCcw,
 } from 'lucide-react';
 import { PageHeader } from '../components/common/PageHeader';
 import { SearchInput } from '../components/common/SearchInput';

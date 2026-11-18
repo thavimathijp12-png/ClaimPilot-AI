@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   Sparkles,
   CheckCircle2,
-  AlertTriangle,
   RefreshCw,
   Edit2,
   Save,
@@ -16,7 +15,6 @@ import {
   ZoomIn,
   ZoomOut,
   ShieldAlert,
-  Info,
   FileText,
   UserCheck,
 } from 'lucide-react';
