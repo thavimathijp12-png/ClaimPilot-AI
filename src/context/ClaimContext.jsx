@@ -183,6 +183,33 @@ export function ClaimProvider({ children }) {
     });
   };
 
+  const addClaimComment = (id, comment) => {
+    const text = comment?.trim();
+    const claim = claims.find((item) => item.id === id);
+    if (!claim || !text) return false;
+
+    const timelineItem = {
+      id: `evt-${Date.now()}`,
+      date: new Date().toISOString(),
+      title: 'Reviewer Comment Added',
+      user: currentUser?.name || 'Authorized User',
+      description: text,
+    };
+
+    setClaims((prev) => prev.map((item) => item.id === id
+      ? { ...item, timeline: [timelineItem, ...(item.timeline || [])], reviewNotes: text }
+      : item
+    ));
+    logActivity({
+      action: 'Reviewer Comment Added',
+      category: 'Claims',
+      claimId: id,
+      description: `Added a reviewer note to claim ${id}: ${text}`,
+      severity: 'info',
+    });
+    return true;
+  };
+
   const approveClaim = (id, notes = '') => {
     const claim = claims.find((item) => item.id === id);
     if (!canAdjudicate(claim)) return false;
@@ -520,6 +547,7 @@ export function ClaimProvider({ children }) {
         dataGuardSummary,
         createClaim,
         updateClaim,
+        addClaimComment,
         approveClaim,
         rejectClaim,
         requestCorrection,
