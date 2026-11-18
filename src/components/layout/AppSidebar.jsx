@@ -20,7 +20,9 @@ import { cn } from '../../utils/cn';
 export function AppSidebar({ isOpen, onClose }) {
   const { claims, dataGuardSummary } = useClaims();
 
-  const pendingApprovalsCount = claims.filter(c => c.status === 'Pending Review').length;
+  const pendingApprovalsCount = claims.filter(
+    (claim) => claim.status === 'Pending Review' || claim.status === 'Under AI Audit'
+  ).length;
 
   const navGroups = [
     {

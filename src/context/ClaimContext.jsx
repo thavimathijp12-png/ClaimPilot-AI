@@ -8,6 +8,9 @@ import { storage } from '../services/storageService';
 import { useAuth } from './AuthContext';
 
 const ClaimContext = createContext(null);
+const PENDING_ADJUDICATION_STATUSES = ['Pending Review', 'Under AI Audit'];
+
+const canAdjudicate = (claim) => claim && PENDING_ADJUDICATION_STATUSES.includes(claim.status);
 
 export function ClaimProvider({ children }) {
   const { currentUser } = useAuth();
@@ -181,18 +184,16 @@ export function ClaimProvider({ children }) {
   };
 
   const approveClaim = (id, notes = '') => {
-    let approvedClaimName = '';
-    let amount = 0;
+    const claim = claims.find((item) => item.id === id);
+    if (!canAdjudicate(claim)) return false;
 
     setClaims(prev => prev.map(c => {
       if (c.id === id) {
-        approvedClaimName = c.claimantName;
-        amount = c.claimAmount;
         return {
           ...c,
           status: 'Approved',
           approvedAmount: c.claimAmount,
-          reviewNotes: notes || c.reviewNotes || 'Approved by clinical reviewer.',
+          reviewNotes: notes.trim() || c.reviewNotes || 'Approved by clinical reviewer.',
           timeline: [
             {
               id: `evt-${Date.now()}`,
@@ -212,29 +213,30 @@ export function ClaimProvider({ children }) {
       action: 'Claim Approved',
       category: 'Approvals',
       claimId: id,
-      description: `Approved claim ${id} for ${approvedClaimName} ($${amount.toLocaleString()}).`,
+      description: `Approved claim ${id} for ${claim.claimantName} ($${claim.claimAmount.toLocaleString()}).`,
       severity: 'success'
     });
+    return true;
   };
 
   const rejectClaim = (id, reason) => {
-    let claimantName = '';
+    const claim = claims.find((item) => item.id === id);
+    if (!canAdjudicate(claim) || !reason?.trim()) return false;
 
     setClaims(prev => prev.map(c => {
       if (c.id === id) {
-        claimantName = c.claimantName;
         return {
           ...c,
           status: 'Rejected',
           approvedAmount: 0,
-          reviewNotes: reason,
+          reviewNotes: reason.trim(),
           timeline: [
             {
               id: `evt-${Date.now()}`,
               date: new Date().toISOString(),
               title: 'Claim Rejected',
               user: currentUser?.name || 'Clinical Adjudicator',
-              description: `Reason for rejection: "${reason}"`
+              description: `Reason for rejection: "${reason.trim()}"`
             },
             ...(c.timeline || [])
           ]
@@ -247,28 +249,29 @@ export function ClaimProvider({ children }) {
       action: 'Claim Rejected',
       category: 'Approvals',
       claimId: id,
-      description: `Rejected claim ${id} for ${claimantName}. Reason: ${reason}`,
+      description: `Rejected claim ${id} for ${claim.claimantName}. Reason: ${reason.trim()}`,
       severity: 'error'
     });
+    return true;
   };
 
   const requestCorrection = (id, comment) => {
-    let claimantName = '';
+    const claim = claims.find((item) => item.id === id);
+    if (!canAdjudicate(claim) || !comment?.trim()) return false;
 
     setClaims(prev => prev.map(c => {
       if (c.id === id) {
-        claimantName = c.claimantName;
         return {
           ...c,
           status: 'Correction Requested',
-          reviewNotes: comment,
+          reviewNotes: comment.trim(),
           timeline: [
             {
               id: `evt-${Date.now()}`,
               date: new Date().toISOString(),
               title: 'Correction Requested',
               user: currentUser?.name || 'Clinical Adjudicator',
-              description: `Correction request: "${comment}"`
+              description: `Correction request: "${comment.trim()}"`
             },
             ...(c.timeline || [])
           ]
@@ -281,9 +284,10 @@ export function ClaimProvider({ children }) {
       action: 'Correction Requested',
       category: 'Approvals',
       claimId: id,
-      description: `Requested provider correction for ${id} (${claimantName}): ${comment}`,
+      description: `Requested provider correction for ${id} (${claim.claimantName}): ${comment.trim()}`,
       severity: 'warning'
     });
+    return true;
   };
 
   // Documents

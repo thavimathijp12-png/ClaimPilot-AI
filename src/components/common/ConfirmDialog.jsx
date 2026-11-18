@@ -20,18 +20,26 @@ export function ConfirmDialog({
 }) {
   const [inputText, setInputText] = useState('');
   const [error, setError] = useState('');
+  const [isConfirming, setIsConfirming] = useState(false);
 
   const handleConfirm = () => {
+    if (isLoading || isConfirming) return;
     if (textRequired && !inputText.trim()) {
       setError(`A ${textLabel.toLowerCase()} is mandatory to proceed.`);
       return;
     }
     setError('');
-    onConfirm(inputText.trim());
-    setInputText('');
+    setIsConfirming(true);
+    try {
+      const result = onConfirm(inputText.trim());
+      if (result !== false) setInputText('');
+    } finally {
+      setIsConfirming(false);
+    }
   };
 
   const handleClose = () => {
+    if (isConfirming) return;
     setInputText('');
     setError('');
     onClose();
@@ -77,7 +85,7 @@ export function ConfirmDialog({
           <button
             type="button"
             onClick={handleClose}
-            disabled={isLoading}
+            disabled={isLoading || isConfirming}
             className="px-4 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
           >
             {cancelLabel}
@@ -85,13 +93,13 @@ export function ConfirmDialog({
           <button
             type="button"
             onClick={handleConfirm}
-            disabled={isLoading}
+            disabled={isLoading || isConfirming}
             className={cn(
               'px-4 py-2 text-xs font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-1.5',
               config.confirmBtn
             )}
           >
-            {isLoading ? 'Processing...' : confirmLabel}
+            {isLoading || isConfirming ? 'Processing...' : confirmLabel}
           </button>
         </>
       }
