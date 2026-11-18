@@ -1,10 +1,11 @@
-export function formatCurrency(amount) {
-  if (amount === undefined || amount === null || isNaN(amount)) return '$0.00';
-  return new Intl.NumberFormat('en-US', {
+export function formatCurrency(amount, options = {}) {
+  if (amount === undefined || amount === null || isNaN(amount)) return '₹0.00';
+  return new Intl.NumberFormat('en-IN', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'INR',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
+    ...options,
   }).format(amount);
 }
 

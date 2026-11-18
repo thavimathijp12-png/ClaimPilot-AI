@@ -561,7 +561,7 @@ export function ClaimsPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <FormField
-              label="Claim Amount ($)"
+              label="Claim Amount (₹)"
               required
               error={formErrors.claimAmount}
               helperText="Total billed charge"
@@ -576,7 +576,7 @@ export function ClaimsPage() {
               />
             </FormField>
 
-            <FormField label="Copay Obligation ($)">
+            <FormField label="Copay Obligation (₹)">
               <input
                 type="number"
                 step="0.01"
