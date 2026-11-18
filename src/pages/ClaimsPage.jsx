@@ -172,20 +172,30 @@ export function ClaimsPage() {
     }
 
     setFormErrors({});
+    const claimData = {
+      ...validation.data,
+      copayAmount: validation.data.copayAmount ?? 0,
+    };
 
     if (editingClaim) {
-      updateClaim(editingClaim.id, {
-        ...formData,
-        claimAmount: parseFloat(formData.claimAmount),
-        copayAmount: parseFloat(formData.copayAmount) || 0,
-      });
+      updateClaim(editingClaim.id, claimData);
       toast.success('Claim Updated', `Record for ${editingClaim.id} updated successfully.`);
     } else {
-      const created = createClaim(formData);
+      const created = createClaim(claimData);
       toast.success('Claim Registered', `New claim created with reference ${created.id}.`);
     }
 
     setModalOpen(false);
+  };
+
+  const handleFieldChange = (field, value) => {
+    setFormData((current) => ({ ...current, [field]: value }));
+    setFormErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
   };
 
   // Sorting Handler
@@ -539,11 +549,15 @@ export function ClaimsPage() {
               required
               error={formErrors.claimantName}
               helperText="e.g., Jonathan Sterling (demo record)"
+              id="claimant-name"
             >
               <input
+                id="claimant-name"
                 type="text"
                 value={formData.claimantName}
-                onChange={(e) => setFormData({ ...formData, claimantName: e.target.value })}
+                onChange={(e) => handleFieldChange('claimantName', e.target.value)}
+                aria-invalid={Boolean(formErrors.claimantName)}
+                aria-describedby={formErrors.claimantName ? 'claimant-name-error' : undefined}
                 placeholder="Enter patient full name"
                 className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-primary-500"
               />
@@ -554,11 +568,15 @@ export function ClaimsPage() {
               required
               error={formErrors.policyNumber}
               helperText="e.g., POL-BCBS-9042"
+              id="policy-number"
             >
               <input
+                id="policy-number"
                 type="text"
                 value={formData.policyNumber}
-                onChange={(e) => setFormData({ ...formData, policyNumber: e.target.value })}
+                onChange={(e) => handleFieldChange('policyNumber', e.target.value)}
+                aria-invalid={Boolean(formErrors.policyNumber)}
+                aria-describedby={formErrors.policyNumber ? 'policy-number-error' : undefined}
                 placeholder="POL-XXXX-0000"
                 className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-primary-500 font-mono"
               />
@@ -566,11 +584,14 @@ export function ClaimsPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField label="Hospital / Facility Name" required error={formErrors.hospitalName}>
+            <FormField label="Hospital / Facility Name" required error={formErrors.hospitalName} id="hospital-name">
               <input
+                id="hospital-name"
                 type="text"
                 value={formData.hospitalName}
-                onChange={(e) => setFormData({ ...formData, hospitalName: e.target.value })}
+                onChange={(e) => handleFieldChange('hospitalName', e.target.value)}
+                aria-invalid={Boolean(formErrors.hospitalName)}
+                aria-describedby={formErrors.hospitalName ? 'hospital-name-error' : undefined}
                 placeholder="e.g., Metropolitan Memorial Hospital"
                 className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-primary-500"
               />
@@ -579,7 +600,7 @@ export function ClaimsPage() {
             <FormField label="Encounter / Claim Type">
               <select
                 value={formData.claimType}
-                onChange={(e) => setFormData({ ...formData, claimType: e.target.value })}
+                onChange={(e) => handleFieldChange('claimType', e.target.value)}
                 className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-primary-500 bg-white"
               >
                 <option value="Inpatient">Inpatient Care</option>
@@ -597,23 +618,32 @@ export function ClaimsPage() {
               required
               error={formErrors.claimAmount}
               helperText="Total billed charge"
+              id="claim-amount"
             >
               <input
+                id="claim-amount"
                 type="number"
+                min="0.01"
                 step="0.01"
                 value={formData.claimAmount}
-                onChange={(e) => setFormData({ ...formData, claimAmount: e.target.value })}
+                onChange={(e) => handleFieldChange('claimAmount', e.target.value)}
+                aria-invalid={Boolean(formErrors.claimAmount)}
+                aria-describedby={formErrors.claimAmount ? 'claim-amount-error' : undefined}
                 placeholder="0.00"
                 className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-primary-500 font-semibold"
               />
             </FormField>
 
-            <FormField label="Copay Obligation ($)">
+            <FormField label="Copay Obligation ($)" error={formErrors.copayAmount} id="copay-amount">
               <input
+                id="copay-amount"
                 type="number"
+                min="0"
                 step="0.01"
                 value={formData.copayAmount}
-                onChange={(e) => setFormData({ ...formData, copayAmount: e.target.value })}
+                onChange={(e) => handleFieldChange('copayAmount', e.target.value)}
+                aria-invalid={Boolean(formErrors.copayAmount)}
+                aria-describedby={formErrors.copayAmount ? 'copay-amount-error' : undefined}
                 placeholder="50.00"
                 className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-primary-500"
               />
@@ -622,7 +652,7 @@ export function ClaimsPage() {
             <FormField label="Initial Status">
               <select
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                onChange={(e) => handleFieldChange('status', e.target.value)}
                 className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-primary-500 bg-white"
               >
                 <option value="Pending Review">Pending Review</option>
@@ -635,20 +665,26 @@ export function ClaimsPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField label="Admission / Service Date">
+            <FormField label="Admission / Service Date" required error={formErrors.admissionDate} id="admission-date">
               <input
+                id="admission-date"
                 type="date"
                 value={formData.admissionDate}
-                onChange={(e) => setFormData({ ...formData, admissionDate: e.target.value })}
+                onChange={(e) => handleFieldChange('admissionDate', e.target.value)}
+                aria-invalid={Boolean(formErrors.admissionDate)}
+                aria-describedby={formErrors.admissionDate ? 'admission-date-error' : undefined}
                 className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-primary-500"
               />
             </FormField>
 
-            <FormField label="Discharge Date" error={formErrors.dischargeDate}>
+            <FormField label="Discharge Date" required error={formErrors.dischargeDate} id="discharge-date">
               <input
+                id="discharge-date"
                 type="date"
                 value={formData.dischargeDate}
-                onChange={(e) => setFormData({ ...formData, dischargeDate: e.target.value })}
+                onChange={(e) => handleFieldChange('dischargeDate', e.target.value)}
+                aria-invalid={Boolean(formErrors.dischargeDate)}
+                aria-describedby={formErrors.dischargeDate ? 'discharge-date-error' : undefined}
                 className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-primary-500"
               />
             </FormField>
@@ -658,7 +694,7 @@ export function ClaimsPage() {
             <textarea
               rows={3}
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) => handleFieldChange('description', e.target.value)}
               placeholder="Summary of medical procedures, diagnostic notes, or hospital admission context..."
               className="w-full text-xs p-3 border border-slate-200 rounded-lg focus:outline-none focus:border-primary-500 resize-none"
             />

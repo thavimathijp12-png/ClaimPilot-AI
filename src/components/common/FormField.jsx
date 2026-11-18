@@ -32,7 +32,11 @@ export function FormField({
       )}
       {children}
       {error && (
-        <p className="text-[11px] text-rose-600 font-medium animate-in fade-in duration-150">
+        <p
+          id={id ? `${id}-error` : undefined}
+          role="alert"
+          className="text-[11px] text-rose-600 font-medium animate-in fade-in duration-150"
+        >
           {error}
         </p>
       )}
