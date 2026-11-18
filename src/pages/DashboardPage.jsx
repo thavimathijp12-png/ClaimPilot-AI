@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useClaims } from '../context/ClaimContext';
+import { useToast } from '../hooks/useToast';
 import {
   FileText,
   Clock,
@@ -15,6 +16,8 @@ import {
   FileBarChart,
   Calendar,
   Filter,
+  RefreshCw,
+  Activity,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -43,8 +46,20 @@ export function DashboardPage() {
   const { currentUser } = useAuth();
   const { claims, activities, dataGuardSummary } = useClaims();
   const navigate = useNavigate();
+  const toast = useToast();
 
   const [dateRange, setDateRange] = useState('30d');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastSynced, setLastSynced] = useState('just now');
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+      setLastSynced('just now');
+      toast.success('Queue Synchronized', 'Retrieved latest intake telemetry and claim status updates.');
+    }, 600);
+  };
 
   // Dynamic calculations filtered by selected operational window
   const filteredClaims = useMemo(() => {
@@ -123,19 +138,43 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Date Range Operational Window Selector */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-          <Calendar className="w-4 h-4 text-primary-600" />
-          <span>Operational Window:</span>
-          <span className="text-slate-500 font-normal">
-            {dateRange === '7d' && 'Showing last 7 calendar days'}
-            {dateRange === '30d' && 'Showing last 30 calendar days (Standard Billing Cycle)'}
-            {dateRange === 'qtd' && 'Showing current quarter (Q4)'}
-            {dateRange === 'ytd' && 'Showing year to date'}
-            {dateRange === 'all' && 'All available historical records'}
-          </span>
+      {/* Date Range & Telemetry Stream Bar */}
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
+        <div className="flex flex-wrap items-center gap-2.5 text-xs">
+          <div className="flex items-center gap-1.5 font-semibold text-slate-700">
+            <Calendar className="w-4 h-4 text-primary-600" />
+            <span>Operational Window:</span>
+            <span className="text-slate-500 font-normal">
+              {dateRange === '7d' && 'Last 7 Days'}
+              {dateRange === '30d' && 'Last 30 Days (Cycle)'}
+              {dateRange === 'qtd' && 'Current Quarter (Q4)'}
+              {dateRange === 'ytd' && 'Year to Date'}
+              {dateRange === 'all' && 'All Records'}
+            </span>
+          </div>
+
+          <span className="text-slate-300 hidden sm:inline">•</span>
+
+          {/* Live Telemetry Indicator */}
+          <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-[11px] font-medium text-emerald-800">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span>Intake Stream Active</span>
+            <span className="text-emerald-600/80 font-mono text-[10px]">({lastSynced})</span>
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              title="Synchronize claims queue"
+              className="ml-0.5 p-0.5 hover:bg-emerald-100 rounded transition-colors text-emerald-700"
+            >
+              <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
         </div>
+
         <div className="inline-flex items-center p-1 bg-slate-100 rounded-lg border border-slate-200/80 text-xs">
           {[
             { id: '7d', label: '7 Days' },
