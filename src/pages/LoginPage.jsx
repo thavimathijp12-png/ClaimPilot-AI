@@ -1,24 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
-import { Activity, Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowRight, UserCheck } from 'lucide-react';
+import { Activity, Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowRight, UserCheck, Clock, X, Shield, Check, Minus } from 'lucide-react';
 import { Avatar } from '../components/common/Avatar';
+import { Modal } from '../components/common/Modal';
 import { cn } from '../utils/cn';
+import { formatRelativeTime } from '../utils/formatters';
 
 export function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => localStorage.getItem('claimpilot_remembered_email') || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(() => Boolean(localStorage.getItem('claimpilot_remembered_email')));
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSubmitted, setForgotSubmitted] = useState(false);
+  const [showMatrixModal, setShowMatrixModal] = useState(false);
+
+  // Last Active Session State
+  const [lastSession, setLastSession] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('claimpilot_last_session') || 'null');
+    } catch {
+      return null;
+    }
+  });
 
   const { login, demoAccounts } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
+
+  const handleClearSavedSession = (e) => {
+    e.stopPropagation();
+    localStorage.removeItem('claimpilot_last_session');
+    localStorage.removeItem('claimpilot_remembered_email');
+    setLastSession(null);
+    setEmail('');
+    setRememberMe(false);
+    toast.info('Session Cleared', 'Remembered credentials removed from this browser.');
+  };
+
+  const handleResumeLastSession = async () => {
+    if (!lastSession) return;
+    const account = demoAccounts.find((a) => a.email === lastSession.email);
+    if (account) {
+      handleQuickDemoLogin(account);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,6 +60,22 @@ export function LoginPage() {
     setIsLoading(true);
     try {
       const user = await login(email, password, rememberMe);
+      if (rememberMe) {
+        localStorage.setItem('claimpilot_remembered_email', user.email);
+        localStorage.setItem(
+          'claimpilot_last_session',
+          JSON.stringify({
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            roleCode: user.roleCode,
+            timestamp: new Date().toISOString(),
+          })
+        );
+      } else {
+        localStorage.removeItem('claimpilot_remembered_email');
+        localStorage.removeItem('claimpilot_last_session');
+      }
       toast.success('Welcome back!', `Signed in as ${user.name} (${user.role}).`);
       navigate('/dashboard');
     } catch (err) {
@@ -95,6 +141,49 @@ export function LoginPage() {
               Enter your credentials or choose a pre-configured demo persona.
             </p>
           </div>
+
+          {lastSession && (
+            <div className="mb-5 p-3.5 bg-gradient-to-r from-primary-50/70 to-teal-50/50 rounded-xl border border-primary-100/80 flex items-center justify-between gap-3 animate-in fade-in-0 duration-200">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Avatar
+                  name={lastSession.name}
+                  size="sm"
+                  className="border border-primary-200 flex-shrink-0"
+                />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-navy truncate">
+                      {lastSession.name}
+                    </span>
+                    <span className="text-[10px] px-1.5 py-0.5 font-semibold bg-primary-100 text-primary-700 rounded truncate">
+                      {lastSession.role}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 text-[11px] text-slate-500 mt-0.5">
+                    <Clock className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                    <span>Last active {formatRelativeTime(lastSession.timestamp)}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={handleResumeLastSession}
+                  className="px-2.5 py-1 text-xs font-semibold text-primary-700 bg-white hover:bg-primary-50 rounded-lg border border-primary-200 shadow-2xs transition-colors whitespace-nowrap"
+                >
+                  Resume
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClearSavedSession}
+                  title="Clear remembered session"
+                  className="p-1 text-slate-400 hover:text-rose-500 hover:bg-white rounded transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -183,7 +272,14 @@ export function LoginPage() {
                 <UserCheck className="w-3.5 h-3.5 text-teal-600" />
                 One-Click Demo Personas
               </span>
-              <span className="text-[10px] text-slate-400 font-mono">Instant Access</span>
+              <button
+                type="button"
+                onClick={() => setShowMatrixModal(true)}
+                className="text-[11px] font-semibold text-primary-600 hover:text-primary-700 hover:underline flex items-center gap-1"
+              >
+                <Shield className="w-3 h-3" />
+                <span>Permissions Matrix</span>
+              </button>
             </div>
 
             <div className="space-y-2">
@@ -201,7 +297,7 @@ export function LoginPage() {
                       name={account.name}
                       role={account.role}
                       size="sm"
-                      className="w-8 h-8"
+                      className="w-8 h-8 flex-shrink-0"
                     />
                     <div className="min-w-0">
                       <p className="text-xs font-bold text-navy group-hover:text-primary-700 truncate">
@@ -210,6 +306,21 @@ export function LoginPage() {
                       <p className="text-[10px] text-slate-500 truncate">
                         {account.role} • {account.email}
                       </p>
+                      {account.roleCode === 'ADMIN' && (
+                        <span className="inline-block mt-0.5 text-[9px] font-semibold px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200/80">
+                          Full Governance & Audit Trail
+                        </span>
+                      )}
+                      {account.roleCode === 'REVIEWER' && (
+                        <span className="inline-block mt-0.5 text-[9px] font-semibold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                          Adjudication & DataGuard Overrides
+                        </span>
+                      )}
+                      {account.roleCode === 'OPERATOR' && (
+                        <span className="inline-block mt-0.5 text-[9px] font-semibold px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200/80">
+                          Intake & AI Extraction Review
+                        </span>
+                      )}
                     </div>
                   </div>
                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 group-hover:bg-primary-600 group-hover:text-white transition-colors flex-shrink-0">
@@ -269,6 +380,69 @@ export function LoginPage() {
           </div>
         </div>
       )}
+
+      {/* Role Capabilities & Permissions Matrix Modal */}
+      <Modal
+        isOpen={showMatrixModal}
+        onClose={() => setShowMatrixModal(false)}
+        title="Enterprise Role Permissions & Capability Matrix"
+        subtitle="Role-Based Access Control (RBAC) governance for ClaimPilot AI healthcare processing"
+        maxWidth="max-w-2xl"
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-slate-500">
+            ClaimPilot AI enforces strict role-based authorization to safeguard Protected Health Information (PHI) and clinical adjudication integrity.
+          </p>
+
+          <div className="overflow-x-auto border border-slate-200 rounded-xl">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold">
+                  <th className="py-2.5 px-3">System Capability</th>
+                  <th className="py-2.5 px-3 text-center">Operator</th>
+                  <th className="py-2.5 px-3 text-center">Reviewer</th>
+                  <th className="py-2.5 px-3 text-center">Administrator</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {[
+                  { name: 'Claims Intake & Document Upload', op: true, rev: true, adm: true },
+                  { name: 'AI OCR Extraction Review & Edit', op: true, rev: true, adm: true },
+                  { name: 'DataGuard IQ Quality Rule Overrides', op: false, rev: true, adm: true },
+                  { name: 'Clinical Adjudication (Approve / Reject)', op: false, rev: true, adm: true },
+                  { name: 'Adjudication Determination Letters', op: false, rev: true, adm: true },
+                  { name: 'Audit Trail & Compliance Log Export', op: false, rev: false, adm: true },
+                  { name: 'User Management & Role Switching', op: false, rev: false, adm: true },
+                  { name: 'Demo Data Reset & Governance Config', op: false, rev: false, adm: true },
+                ].map((row, idx) => (
+                  <tr key={idx} className={idx % 2 === 1 ? 'bg-slate-50/30' : 'bg-white'}>
+                    <td className="py-2 px-3 font-medium text-slate-800">{row.name}</td>
+                    <td className="py-2 px-3 text-center">
+                      {row.op ? <Check className="w-4 h-4 text-emerald-600 mx-auto" /> : <Minus className="w-3.5 h-3.5 text-slate-300 mx-auto" />}
+                    </td>
+                    <td className="py-2 px-3 text-center">
+                      {row.rev ? <Check className="w-4 h-4 text-emerald-600 mx-auto" /> : <Minus className="w-3.5 h-3.5 text-slate-300 mx-auto" />}
+                    </td>
+                    <td className="py-2 px-3 text-center">
+                      {row.adm ? <Check className="w-4 h-4 text-emerald-600 mx-auto" /> : <Minus className="w-3.5 h-3.5 text-slate-300 mx-auto" />}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="button"
+              onClick={() => setShowMatrixModal(false)}
+              className="px-4 py-2 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm"
+            >
+              Close Matrix
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

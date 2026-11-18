@@ -3,6 +3,7 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import { AppSidebar } from './AppSidebar';
 import { AppTopbar } from './AppTopbar';
 import { KeyboardShortcutsModal } from '../common/KeyboardShortcutsModal';
+import SessionLockModal from '../common/SessionLockModal';
 
 export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -97,6 +98,9 @@ export function AppLayout() {
         isOpen={shortcutsOpen}
         onClose={() => setShortcutsOpen(false)}
       />
+
+      {/* HIPAA Workstation Session Lock Modal */}
+      <SessionLockModal />
     </div>
   );
 }

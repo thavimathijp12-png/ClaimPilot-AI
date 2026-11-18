@@ -2,13 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { Avatar } from '../common/Avatar';
-import { User, Settings, LogOut, Check, ShieldCheck, ChevronDown, RefreshCw } from 'lucide-react';
+import { User, Settings, LogOut, Check, ShieldCheck, ChevronDown, RefreshCw, Lock } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 export function UserProfileDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const { currentUser, switchRole, logout, demoAccounts } = useAuth();
+  const { currentUser, switchRole, logout, lockSession, demoAccounts } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -137,6 +137,17 @@ export function UserProfileDropdown() {
             >
               <Settings className="w-4 h-4 text-slate-400" />
               <span>System Settings & Profile</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                lockSession();
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-amber-50 hover:text-amber-800 rounded-lg transition-colors text-left font-medium"
+            >
+              <Lock className="w-4 h-4 text-amber-500" />
+              <span>Lock Workstation (HIPAA)</span>
             </button>
             <button
               type="button"

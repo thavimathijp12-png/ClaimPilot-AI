@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useClaims } from '../context/ClaimContext';
@@ -14,6 +14,7 @@ import {
   UploadCloud,
   FileBarChart,
   Calendar,
+  Filter,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -43,12 +44,35 @@ export function DashboardPage() {
   const { claims, activities, dataGuardSummary } = useClaims();
   const navigate = useNavigate();
 
-  // Dynamic calculations from claims context
-  const totalClaimsCount = claims.length;
-  const pendingCount = claims.filter(c => c.status === 'Pending Review' || c.status === 'Under AI Audit').length;
-  const approvedCount = claims.filter(c => c.status === 'Approved').length;
-  const rejectedCount = claims.filter(c => c.status === 'Rejected').length;
-  const totalVolume = claims.reduce((acc, curr) => acc + (curr.claimAmount || 0), 0);
+  const [dateRange, setDateRange] = useState('30d');
+
+  // Dynamic calculations filtered by selected operational window
+  const filteredClaims = useMemo(() => {
+    if (dateRange === 'all') return claims;
+    const now = new Date();
+    const daysMap = { '7d': 7, '30d': 30, 'qtd': 90, 'ytd': 365 };
+    const maxDays = daysMap[dateRange] || 30;
+    const cutoff = new Date(now.getTime() - maxDays * 24 * 60 * 60 * 1000);
+    return claims.filter((c) => {
+      if (!c.submissionDate) return true;
+      const sub = new Date(c.submissionDate);
+      return isNaN(sub.getTime()) || sub >= cutoff;
+    });
+  }, [claims, dateRange]);
+
+  const totalClaimsCount = filteredClaims.length;
+  const pendingCount = filteredClaims.filter(c => c.status === 'Pending Review' || c.status === 'Under AI Audit').length;
+  const approvedCount = filteredClaims.filter(c => c.status === 'Approved').length;
+  const rejectedCount = filteredClaims.filter(c => c.status === 'Rejected').length;
+  const totalVolume = filteredClaims.reduce((acc, curr) => acc + (curr.claimAmount || 0), 0);
+
+  // Dynamic trend data scaled to selected window
+  const trendData = useMemo(() => {
+    if (dateRange === '7d') return MONTHLY_TREND_DATA.slice(-2);
+    if (dateRange === '30d') return MONTHLY_TREND_DATA.slice(-4);
+    if (dateRange === 'qtd') return MONTHLY_TREND_DATA.slice(-6);
+    return MONTHLY_TREND_DATA;
+  }, [dateRange]);
 
   const recentClaims = claims.slice(0, 5);
   const pendingApprovals = claims.filter(c => c.status === 'Pending Review').slice(0, 3);
@@ -96,6 +120,43 @@ export function DashboardPage() {
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Create New Claim</span>
           </button>
+        </div>
+      </div>
+
+      {/* Date Range Operational Window Selector */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs">
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+          <Calendar className="w-4 h-4 text-primary-600" />
+          <span>Operational Window:</span>
+          <span className="text-slate-500 font-normal">
+            {dateRange === '7d' && 'Showing last 7 calendar days'}
+            {dateRange === '30d' && 'Showing last 30 calendar days (Standard Billing Cycle)'}
+            {dateRange === 'qtd' && 'Showing current quarter (Q4)'}
+            {dateRange === 'ytd' && 'Showing year to date'}
+            {dateRange === 'all' && 'All available historical records'}
+          </span>
+        </div>
+        <div className="inline-flex items-center p-1 bg-slate-100 rounded-lg border border-slate-200/80 text-xs">
+          {[
+            { id: '7d', label: '7 Days' },
+            { id: '30d', label: '30 Days' },
+            { id: 'qtd', label: 'Quarter' },
+            { id: 'ytd', label: 'YTD' },
+            { id: 'all', label: 'All Time' },
+          ].map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => setDateRange(r.id)}
+              className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+                dateRange === r.id
+                  ? 'bg-white text-primary-700 shadow-2xs'
+                  : 'text-slate-600 hover:text-navy hover:bg-slate-200/60'
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -158,7 +219,7 @@ export function DashboardPage() {
             }
           >
             <ResponsiveContainer width="100%" height={260}>
-              <AreaChart data={MONTHLY_TREND_DATA} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+              <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#2563EB" stopOpacity={0.25} />
