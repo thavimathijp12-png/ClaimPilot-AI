@@ -6,17 +6,11 @@ import {
   FileText,
   UploadCloud,
   Search,
-  Filter,
   Eye,
   Trash2,
   Sparkles,
-  CheckCircle2,
-  AlertTriangle,
-  Download,
-  ExternalLink,
   ZoomIn,
   ZoomOut,
-  FileCheck,
 } from 'lucide-react';
 import { PageHeader } from '../components/common/PageHeader';
 import { FileUploader } from '../components/common/FileUploader';
@@ -26,7 +20,7 @@ import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { formatFileSize, formatDate } from '../utils/formatters';
 
 export function DocumentsPage() {
-  const { documents, claims, uploadDocument, deleteDocument, updateDocument } = useClaims();
+  const { documents, claims, uploadDocument, deleteDocument } = useClaims();
   const toast = useToast();
   const navigate = useNavigate();
 
@@ -314,7 +308,6 @@ export function DocumentsPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    const docToReview = previewDoc;
                     setPreviewDoc(null);
                     navigate('/extraction');
                   }}

@@ -7,11 +7,6 @@ import {
   Download,
   Eye,
   Edit2,
-  FileText,
-  Filter,
-  CheckCircle2,
-  AlertTriangle,
-  RotateCcw,
   Copy,
   ShieldCheck,
 } from 'lucide-react';

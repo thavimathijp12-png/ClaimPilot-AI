@@ -14,7 +14,6 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  Upload,
   Plus,
   Send,
   ExternalLink,
@@ -27,12 +26,11 @@ import { formatCurrency, formatDate, formatRelativeTime, formatFileSize } from '
 export function ClaimDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { claims, documents, validations, approveClaim, rejectClaim, requestCorrection, addClaimComment } = useClaims();
+  const { claims, documents, approveClaim, rejectClaim, requestCorrection, addClaimComment } = useClaims();
   const toast = useToast();
 
   const claim = claims.find(c => c.id === id);
   const claimDocs = documents.filter(d => d.claimId === id);
-  const validationData = validations[id] || null;
   const canAdjudicate = claim && ['Pending Review', 'Under AI Audit'].includes(claim.status);
 
   // Decision Modal State
