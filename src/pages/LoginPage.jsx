@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
-import { Activity, Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowRight, UserCheck, Clock, X } from 'lucide-react';
+import { Activity, Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowRight, UserCheck, Clock, X, Shield, Check, Minus } from 'lucide-react';
 import { Avatar } from '../components/common/Avatar';
+import { Modal } from '../components/common/Modal';
 import { cn } from '../utils/cn';
 import { formatRelativeTime } from '../utils/formatters';
 
@@ -16,6 +17,7 @@ export function LoginPage() {
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSubmitted, setForgotSubmitted] = useState(false);
+  const [showMatrixModal, setShowMatrixModal] = useState(false);
 
   // Last Active Session State
   const [lastSession, setLastSession] = useState(() => {
@@ -270,7 +272,14 @@ export function LoginPage() {
                 <UserCheck className="w-3.5 h-3.5 text-teal-600" />
                 One-Click Demo Personas
               </span>
-              <span className="text-[10px] text-slate-400 font-mono">Instant Access</span>
+              <button
+                type="button"
+                onClick={() => setShowMatrixModal(true)}
+                className="text-[11px] font-semibold text-primary-600 hover:text-primary-700 hover:underline flex items-center gap-1"
+              >
+                <Shield className="w-3 h-3" />
+                <span>Permissions Matrix</span>
+              </button>
             </div>
 
             <div className="space-y-2">
@@ -288,7 +297,7 @@ export function LoginPage() {
                       name={account.name}
                       role={account.role}
                       size="sm"
-                      className="w-8 h-8"
+                      className="w-8 h-8 flex-shrink-0"
                     />
                     <div className="min-w-0">
                       <p className="text-xs font-bold text-navy group-hover:text-primary-700 truncate">
@@ -297,6 +306,21 @@ export function LoginPage() {
                       <p className="text-[10px] text-slate-500 truncate">
                         {account.role} • {account.email}
                       </p>
+                      {account.roleCode === 'ADMIN' && (
+                        <span className="inline-block mt-0.5 text-[9px] font-semibold px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200/80">
+                          Full Governance & Audit Trail
+                        </span>
+                      )}
+                      {account.roleCode === 'REVIEWER' && (
+                        <span className="inline-block mt-0.5 text-[9px] font-semibold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                          Adjudication & DataGuard Overrides
+                        </span>
+                      )}
+                      {account.roleCode === 'OPERATOR' && (
+                        <span className="inline-block mt-0.5 text-[9px] font-semibold px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200/80">
+                          Intake & AI Extraction Review
+                        </span>
+                      )}
                     </div>
                   </div>
                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 group-hover:bg-primary-600 group-hover:text-white transition-colors flex-shrink-0">
@@ -356,6 +380,69 @@ export function LoginPage() {
           </div>
         </div>
       )}
+
+      {/* Role Capabilities & Permissions Matrix Modal */}
+      <Modal
+        isOpen={showMatrixModal}
+        onClose={() => setShowMatrixModal(false)}
+        title="Enterprise Role Permissions & Capability Matrix"
+        subtitle="Role-Based Access Control (RBAC) governance for ClaimPilot AI healthcare processing"
+        maxWidth="max-w-2xl"
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-slate-500">
+            ClaimPilot AI enforces strict role-based authorization to safeguard Protected Health Information (PHI) and clinical adjudication integrity.
+          </p>
+
+          <div className="overflow-x-auto border border-slate-200 rounded-xl">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold">
+                  <th className="py-2.5 px-3">System Capability</th>
+                  <th className="py-2.5 px-3 text-center">Operator</th>
+                  <th className="py-2.5 px-3 text-center">Reviewer</th>
+                  <th className="py-2.5 px-3 text-center">Administrator</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {[
+                  { name: 'Claims Intake & Document Upload', op: true, rev: true, adm: true },
+                  { name: 'AI OCR Extraction Review & Edit', op: true, rev: true, adm: true },
+                  { name: 'DataGuard IQ Quality Rule Overrides', op: false, rev: true, adm: true },
+                  { name: 'Clinical Adjudication (Approve / Reject)', op: false, rev: true, adm: true },
+                  { name: 'Adjudication Determination Letters', op: false, rev: true, adm: true },
+                  { name: 'Audit Trail & Compliance Log Export', op: false, rev: false, adm: true },
+                  { name: 'User Management & Role Switching', op: false, rev: false, adm: true },
+                  { name: 'Demo Data Reset & Governance Config', op: false, rev: false, adm: true },
+                ].map((row, idx) => (
+                  <tr key={idx} className={idx % 2 === 1 ? 'bg-slate-50/30' : 'bg-white'}>
+                    <td className="py-2 px-3 font-medium text-slate-800">{row.name}</td>
+                    <td className="py-2 px-3 text-center">
+                      {row.op ? <Check className="w-4 h-4 text-emerald-600 mx-auto" /> : <Minus className="w-3.5 h-3.5 text-slate-300 mx-auto" />}
+                    </td>
+                    <td className="py-2 px-3 text-center">
+                      {row.rev ? <Check className="w-4 h-4 text-emerald-600 mx-auto" /> : <Minus className="w-3.5 h-3.5 text-slate-300 mx-auto" />}
+                    </td>
+                    <td className="py-2 px-3 text-center">
+                      {row.adm ? <Check className="w-4 h-4 text-emerald-600 mx-auto" /> : <Minus className="w-3.5 h-3.5 text-slate-300 mx-auto" />}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="button"
+              onClick={() => setShowMatrixModal(false)}
+              className="px-4 py-2 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm"
+            >
+              Close Matrix
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
