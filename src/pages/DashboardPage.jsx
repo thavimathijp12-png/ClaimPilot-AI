@@ -30,7 +30,7 @@ import { StatCard } from '../components/common/StatCard';
 import { ChartCard } from '../components/common/ChartCard';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { ActivityTimeline } from '../components/common/ActivityTimeline';
-import { formatCurrency, formatDate } from '../utils/formatters';
+import { formatCurrency } from '../utils/formatters';
 
 function getWindowStart(range, today) {
   const start = new Date(today);
@@ -83,6 +83,9 @@ export function DashboardPage() {
   const approvedCount = filteredClaims.filter(c => c.status === 'Approved').length;
   const rejectedCount = filteredClaims.filter(c => c.status === 'Rejected').length;
   const totalVolume = filteredClaims.reduce((acc, curr) => acc + (curr.claimAmount || 0), 0);
+  const pendingSummary = pendingCount === 0
+    ? 'No claims await clinical review or OCR verification.'
+    : `${pendingCount} claim${pendingCount === 1 ? '' : 's'} await clinical review or automated OCR verification.`;
 
   const trendData = useMemo(() => {
     const today = new Date();
@@ -171,7 +174,9 @@ export function DashboardPage() {
             Welcome back, {currentUser?.name}
           </h1>
           <p className="text-xs sm:text-sm text-content-muted mt-1 max-w-2xl leading-normal">
-            Operational claims queue is healthy. <strong>{pendingCount} claims</strong> currently await clinical review or automated OCR verification.
+            {filteredClaims.length === 0
+              ? 'No claims were submitted in this operational window.'
+              : pendingSummary}
           </p>
         </div>
 
@@ -219,11 +224,15 @@ export function DashboardPage() {
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
             <span>Intake Stream Active</span>
-            <span className="text-emerald-600/80 font-mono text-[10px]">({lastSynced})</span>
+            <span className="text-emerald-600/80 font-mono text-[10px]" aria-live="polite" aria-atomic="true">
+              {isRefreshing ? 'Synchronizing...' : `(${lastSynced})`}
+            </span>
             <button
               type="button"
               onClick={handleRefresh}
               disabled={isRefreshing}
+              aria-label={isRefreshing ? 'Synchronizing claims queue' : 'Synchronize claims queue'}
+              aria-busy={isRefreshing}
               title="Synchronize claims queue"
               className="ml-0.5 p-0.5 hover:bg-emerald-100 rounded transition-colors text-emerald-700"
             >
@@ -232,7 +241,11 @@ export function DashboardPage() {
           </div>
         </div>
 
-        <div className="inline-flex w-full max-w-full sm:w-auto items-center overflow-x-auto p-1 bg-slate-100 rounded-lg border border-slate-200/80 text-xs">
+        <div
+          className="inline-flex w-full max-w-full sm:w-auto items-center overflow-x-auto p-1 bg-slate-100 rounded-lg border border-slate-200/80 text-xs"
+          role="group"
+          aria-label="Filter dashboard by date range"
+        >
           {[
             { id: '7d', label: '7 Days' },
             { id: '30d', label: '30 Days' },
@@ -244,6 +257,7 @@ export function DashboardPage() {
               key={r.id}
               type="button"
               onClick={() => setDateRange(r.id)}
+              aria-pressed={dateRange === r.id}
               className={`shrink-0 whitespace-nowrap px-2.5 py-1 rounded-md font-semibold transition-all ${
                 dateRange === r.id
                   ? 'bg-white text-primary-700 shadow-2xs'
@@ -257,7 +271,7 @@ export function DashboardPage() {
       </div>
 
       {/* Operational Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         <StatCard
           title="Total Claims Intake"
           value={totalClaimsCount}
@@ -283,7 +297,7 @@ export function DashboardPage() {
           onClick={() => navigate('/claims?status=Approved')}
         />
         <StatCard
-          title="Rejected / Disputed"
+          title="Rejected Claims"
           value={rejectedCount}
           subtitle="Compliance or coverage non-match"
           icon={XCircle}
@@ -310,38 +324,53 @@ export function DashboardPage() {
               </button>
             }
           >
-            <ResponsiveContainer width="100%" height={260}>
-              <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2563EB" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorApproved" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0D9488" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#0D9488" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#64748B' }} stroke="#CBD5E1" minTickGap={12} />
-                <YAxis tick={{ fontSize: 11, fill: '#64748B' }} stroke="#CBD5E1" allowDecimals={false} />
-                <Tooltip
-                  formatter={(val) => [Number(val).toLocaleString(), 'Claims']}
-                  contentStyle={{
-                    backgroundColor: '#10233F',
-                    borderRadius: '8px',
-                    color: '#FFF',
-                    fontSize: '12px',
-                    border: 'none',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-                  }}
-                  itemStyle={{ color: '#F1F5F9' }}
-                />
-                <Area type="monotone" dataKey="totalClaims" name="Total Ingested" stroke="#2563EB" strokeWidth={2} fillOpacity={1} fill="url(#colorTotal)" />
-                <Area type="monotone" dataKey="approved" name="Approved" stroke="#0D9488" strokeWidth={2} fillOpacity={1} fill="url(#colorApproved)" />
-                <Legend verticalAlign="bottom" height={28} />
-              </AreaChart>
-            </ResponsiveContainer>
+            {filteredClaims.length === 0 ? (
+              <div className="h-[260px] flex flex-col items-center justify-center text-center px-4" role="status">
+                <FileText className="w-8 h-8 text-slate-300 mb-2" aria-hidden="true" />
+                <p className="text-sm font-semibold text-slate-700">No claims in this window</p>
+                <p className="text-xs text-content-muted mt-1">Choose a wider date range or create a claim to see activity here.</p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/claims?action=create')}
+                  className="mt-3 text-xs font-semibold text-primary-600 hover:text-primary-700"
+                >
+                  Create a claim
+                </button>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={260}>
+                <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2563EB" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorApproved" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0D9488" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#0D9488" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#64748B' }} stroke="#CBD5E1" minTickGap={12} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748B' }} stroke="#CBD5E1" allowDecimals={false} />
+                  <Tooltip
+                    formatter={(val) => [Number(val).toLocaleString(), 'Claims']}
+                    contentStyle={{
+                      backgroundColor: '#10233F',
+                      borderRadius: '8px',
+                      color: '#FFF',
+                      fontSize: '12px',
+                      border: 'none',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                    }}
+                    itemStyle={{ color: '#F1F5F9' }}
+                  />
+                  <Area type="monotone" dataKey="totalClaims" name="Total Ingested" stroke="#2563EB" strokeWidth={2} fillOpacity={1} fill="url(#colorTotal)" />
+                  <Area type="monotone" dataKey="approved" name="Approved" stroke="#0D9488" strokeWidth={2} fillOpacity={1} fill="url(#colorApproved)" />
+                  <Legend verticalAlign="bottom" height={28} />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </ChartCard>
         </div>
 
@@ -411,7 +440,11 @@ export function DashboardPage() {
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="inline-flex items-center p-0.5 bg-slate-100 rounded-lg border border-slate-200/80 text-xs">
+              <div
+                className="inline-flex items-center p-0.5 bg-slate-100 rounded-lg border border-slate-200/80 text-xs"
+                role="group"
+                aria-label="Filter claims queue"
+              >
                 {[
                   { id: 'all', label: 'All', count: queueCounts.all },
                   { id: 'pending', label: 'Pending', count: queueCounts.pending },
@@ -422,6 +455,7 @@ export function DashboardPage() {
                     key={tab.id}
                     type="button"
                     onClick={() => setQueueFilter(tab.id)}
+                    aria-pressed={queueFilter === tab.id}
                     className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all flex items-center gap-1 ${
                       queueFilter === tab.id
                         ? 'bg-white text-primary-700 shadow-2xs'
