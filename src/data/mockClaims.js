@@ -70,7 +70,7 @@ export const INITIAL_CLAIMS = [
     timeline: [
       { id: 'evt-11', date: '2026-11-09T11:00:00Z', title: 'Claim Created', user: 'Marcus Chen', description: 'Document intake uploaded from hospital portal.' },
       { id: 'evt-12', date: '2026-11-09T11:02:00Z', title: 'DataGuard IQ Verified', user: 'System Engine', description: 'Score: 98/100. No discrepancies detected.' },
-      { id: 'evt-13', date: '2026-11-10T16:30:00Z', title: 'Adjudication Approved', user: 'Sarah Jenkins, RN', description: 'Approved for full eligible payment of $3,240.00.' }
+      { id: 'evt-13', date: '2026-11-10T16:30:00Z', title: 'Adjudication Approved', user: 'Sarah Jenkins, RN', description: 'Approved for full eligible payment of ₹3,240.00.' }
     ]
   },
   {

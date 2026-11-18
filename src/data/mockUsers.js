@@ -6,7 +6,7 @@ export const DEMO_ACCOUNTS = [
     name: 'Dr. Eleanor Vance',
     role: 'Admin',
     roleCode: 'admin',
-    avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=150',
+    avatar: '/admin-profile.png',
     department: 'Executive Operations & Compliance',
     title: 'Chief Compliance Officer',
     badge: 'System Administrator',

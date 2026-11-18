@@ -297,17 +297,17 @@ export function ExtractionReviewPage() {
                     >
                       <td className="py-1.5">Operating Room Services</td>
                       <td className="py-1.5 font-mono text-primary-700">47562</td>
-                      <td className="py-1.5 text-right font-medium">$8,450.00</td>
+                      <td className="py-1.5 text-right font-medium">₹8,450.00</td>
                     </tr>
                     <tr>
                       <td className="py-1.5">Anesthesia Professional</td>
                       <td className="py-1.5 font-mono text-slate-600">00790</td>
-                      <td className="py-1.5 text-right font-medium">$2,650.00</td>
+                      <td className="py-1.5 text-right font-medium">₹2,650.00</td>
                     </tr>
                     <tr>
                       <td className="py-1.5">Room & Board - Inpatient</td>
                       <td className="py-1.5 font-mono text-slate-600">REV-0120</td>
-                      <td className="py-1.5 text-right font-medium">$3,250.00</td>
+                      <td className="py-1.5 text-right font-medium">₹3,250.00</td>
                     </tr>
                   </tbody>
                   <tfoot>
@@ -321,7 +321,7 @@ export function ExtractionReviewPage() {
                       <td colSpan={2} className="py-2 text-right">
                         TOTAL BILLED:
                       </td>
-                      <td className="py-2 text-right text-navy font-bold">$14,850.50</td>
+                      <td className="py-2 text-right text-navy font-bold">₹14,850.50</td>
                     </tr>
                   </tfoot>
                 </table>

@@ -49,7 +49,7 @@ export const claimSchema = z.object({
   claimAmount: z
     .union([z.string(), z.number()])
     .transform((val) => (typeof val === 'string' ? parseFloat(val) : val))
-    .refine((n) => !isNaN(n) && n > 0, { message: 'Claim amount must be a positive number greater than $0.00.' }),
+    .refine((n) => !isNaN(n) && n > 0, { message: 'Claim amount must be a positive number greater than ₹0.00.' }),
   copayAmount: z
     .union([z.string(), z.number()])
     .transform((val) => (typeof val === 'string' ? parseFloat(val) : val))

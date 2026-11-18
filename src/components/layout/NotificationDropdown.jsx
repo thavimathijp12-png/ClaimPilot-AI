@@ -30,7 +30,7 @@ export function NotificationDropdown() {
     {
       id: 'notif-3',
       title: 'Adjudication Finalized',
-      message: 'Claim CLM-2026-8911 approved by Sarah Jenkins, RN ($3,240.00).',
+      message: 'Claim CLM-2026-8911 approved by Sarah Jenkins, RN (₹3,240.00).',
       time: '2h ago',
       type: 'success',
       read: true,
