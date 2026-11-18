@@ -55,7 +55,7 @@ export function ReportsPage() {
       'Approved Claims': m.approved,
       'Rejected Claims': m.rejected,
       'Corrections Requested': m.correction,
-      'Billed Financial Volume (USD)': m.volumeUsd,
+      'Billed Financial Volume (INR)': m.volumeInr || m.volumeUsd,
     }));
     exportToCSV('ClaimPilot_Executive_Analytics_Report', rows);
     toast.success('Report Exported', 'Executive analytics downloaded as CSV.');
@@ -96,7 +96,7 @@ export function ReportsPage() {
         <StatCard
           title="Total Claims Volume (H2)"
           value="11,090"
-          subtitle="$34.5M cumulative billed value"
+          subtitle="₹34.5 Cr cumulative billed value"
           icon={TrendingUp}
           trend={14.8}
           variant="primary"
@@ -174,7 +174,7 @@ export function ReportsPage() {
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748B' }} stroke="#CBD5E1" />
               <YAxis
-                tickFormatter={(val) => `$${(val / 1000000).toFixed(1)}M`}
+                tickFormatter={(val) => `₹${(val / 100000).toFixed(0)}L`}
                 tick={{ fontSize: 11, fill: '#64748B' }}
                 stroke="#CBD5E1"
               />

@@ -128,6 +128,10 @@ export function ClaimsPage() {
     }, { replace: true });
   }, [searchQuery, statusFilter, typeFilter, setSearchParams]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, typeFilter]);
+
   const handleOpenCreateModal = () => {
     setEditingClaim(null);
     setFormData({
@@ -266,13 +270,21 @@ export function ClaimsPage() {
   // Pagination Slice
   const totalPages = Math.ceil(sortedClaims.length / pageSize) || 1;
   useEffect(() => {
-    setCurrentPage((page) => Math.min(page, totalPages));
-  }, [totalPages]);
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const paginatedClaims = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
+    const safePage = Math.max(1, Math.min(currentPage, totalPages));
+    const start = (safePage - 1) * pageSize;
     return sortedClaims.slice(start, start + pageSize);
-  }, [sortedClaims, currentPage, pageSize]);
+  }, [sortedClaims, currentPage, totalPages, pageSize]);
+
+  const handlePageChange = (page) => {
+    const safePage = Math.max(1, Math.min(page, totalPages));
+    setCurrentPage(safePage);
+  };
 
   const handleExportClaims = () => {
     const rows = sortedClaims.map(c => ({
@@ -530,7 +542,7 @@ export function ClaimsPage() {
         totalPages={totalPages}
         totalItems={sortedClaims.length}
         pageSize={pageSize}
-        onPageChange={(page) => setCurrentPage(page)}
+        onPageChange={handlePageChange}
       />
 
       {/* Create / Edit Claim Modal */}
@@ -631,7 +643,7 @@ export function ClaimsPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <FormField
-              label="Claim Amount ($)"
+              label="Claim Amount (₹)"
               required
               error={formErrors.claimAmount}
               helperText="Total billed charge"
@@ -651,7 +663,7 @@ export function ClaimsPage() {
               />
             </FormField>
 
-            <FormField label="Copay Obligation ($)" error={formErrors.copayAmount} id="copay-amount">
+            <FormField label="Copay Obligation (₹)" error={formErrors.copayAmount} id="copay-amount">
               <input
                 id="copay-amount"
                 type="number"

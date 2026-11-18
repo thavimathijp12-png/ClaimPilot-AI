@@ -161,7 +161,7 @@ export function ClaimProvider({ children }) {
       action: 'Claim Created',
       category: 'Claims',
       claimId,
-      description: `Created claim ${claimId} for ${newClaim.claimantName} ($${newClaim.claimAmount.toLocaleString()}).`,
+      description: `Created claim ${claimId} for ${newClaim.claimantName} (₹${newClaim.claimAmount.toLocaleString('en-IN')}).`,
       severity: 'info'
     });
 
@@ -255,7 +255,7 @@ export function ClaimProvider({ children }) {
       action: 'Claim Approved',
       category: 'Approvals',
       claimId: id,
-      description: `Approved claim ${id} for ${claim.claimantName} ($${claim.claimAmount.toLocaleString()}).`,
+      description: `Approved claim ${id} for ${claim.claimantName} (₹${Number(claim.claimAmount).toLocaleString('en-IN')}).`,
       severity: 'success'
     });
     return true;
