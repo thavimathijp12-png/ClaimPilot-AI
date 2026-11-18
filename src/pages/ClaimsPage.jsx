@@ -82,8 +82,34 @@ export function ClaimsPage() {
     if (searchParams.get('action') === 'create') {
       setEditingClaim(null);
       setModalOpen(true);
+      setSearchParams((params) => {
+        const nextParams = new URLSearchParams(params);
+        nextParams.delete('action');
+        return nextParams;
+      }, { replace: true });
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    const nextSearch = searchParams.get('q') || '';
+    const nextStatus = searchParams.get('status') || 'ALL';
+    const nextType = searchParams.get('type') || 'ALL';
+    setSearchQuery((current) => current === nextSearch ? current : nextSearch);
+    setStatusFilter((current) => current === nextStatus ? current : nextStatus);
+    setTypeFilter((current) => current === nextType ? current : nextType);
+  }, [searchParams]);
+
+  useEffect(() => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      const filters = { q: searchQuery.trim(), status: statusFilter, type: typeFilter };
+      Object.entries(filters).forEach(([key, value]) => {
+        if (!value || value === 'ALL') nextParams.delete(key);
+        else nextParams.set(key, value);
+      });
+      return nextParams.toString() === params.toString() ? params : nextParams;
+    }, { replace: true });
+  }, [searchQuery, statusFilter, typeFilter, setSearchParams]);
 
   const handleOpenCreateModal = () => {
     setEditingClaim(null);
@@ -191,25 +217,31 @@ export function ClaimsPage() {
 
   const sortedClaims = useMemo(() => {
     return [...filteredClaims].sort((a, b) => {
-      let aVal = a[sortColumn];
-      let bVal = b[sortColumn];
+      const aValue = a[sortColumn];
+      const bValue = b[sortColumn];
+      let comparison = 0;
 
-      if (sortColumn === 'claimAmount') {
-        aVal = Number(aVal) || 0;
-        bVal = Number(bVal) || 0;
-      } else if (typeof aVal === 'string') {
-        aVal = aVal.toLowerCase();
-        bVal = (bVal || '').toLowerCase();
+      if (sortColumn === 'claimAmount' || sortColumn === 'dataQualityScore') {
+        comparison = (Number(aValue) || 0) - (Number(bValue) || 0);
+      } else if (sortColumn === 'submissionDate') {
+        comparison = (Date.parse(aValue) || 0) - (Date.parse(bValue) || 0);
+      } else {
+        comparison = String(aValue ?? '').localeCompare(String(bValue ?? ''), undefined, {
+          numeric: true,
+          sensitivity: 'base',
+        });
       }
 
-      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
+      return sortDirection === 'asc' ? comparison : -comparison;
     });
   }, [filteredClaims, sortColumn, sortDirection]);
 
   // Pagination Slice
   const totalPages = Math.ceil(sortedClaims.length / pageSize) || 1;
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
+
   const paginatedClaims = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
     return sortedClaims.slice(start, start + pageSize);
