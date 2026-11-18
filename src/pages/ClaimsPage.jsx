@@ -223,7 +223,7 @@ export function ClaimsPage() {
       'Plan': c.policyPlan,
       'Hospital': c.hospitalName,
       'Claim Type': c.claimType,
-      'Billed Amount': c.claimAmount,
+      'Billed Amount (INR)': formatCurrency(c.claimAmount),
       'Submission Date': c.submissionDate,
       'Status': c.status,
       'Data Quality': `${c.dataQualityScore}%`,

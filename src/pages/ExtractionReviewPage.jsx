@@ -357,8 +357,8 @@ export function ExtractionReviewPage() {
                 field.confidence >= 95
                   ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
                   : field.confidence >= 85
-                  ? 'text-blue-700 bg-blue-50 border-blue-200'
-                  : 'text-amber-800 bg-amber-50 border-amber-200';
+                    ? 'text-blue-700 bg-blue-50 border-blue-200'
+                    : 'text-amber-800 bg-amber-50 border-amber-200';
 
               return (
                 <div

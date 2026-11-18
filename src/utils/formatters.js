@@ -1,12 +1,17 @@
 export function formatCurrency(amount, options = {}) {
-  if (amount === undefined || amount === null || isNaN(amount)) return '₹0.00';
+  if (amount === undefined || amount === null) return '₹0.00';
+  let num = amount;
+  if (typeof amount === 'string') {
+    num = parseFloat(amount.replace(/[^0-9.-]+/g, ''));
+  }
+  if (isNaN(num)) return '₹0.00';
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
     ...options,
-  }).format(amount);
+  }).format(num);
 }
 
 export function formatDate(dateStr, includeTime = false) {
