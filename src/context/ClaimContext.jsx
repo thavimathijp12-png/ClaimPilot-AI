@@ -422,7 +422,7 @@ export function ClaimProvider({ children }) {
     }));
 
     logActivity({
-      action: 'AI Extraction Verified',
+      action: 'Extraction Verified',
       category: 'Extraction',
       claimId,
       description: `Confirmed OCR extraction integrity for claim ${claimId}.`,
@@ -453,10 +453,10 @@ export function ClaimProvider({ children }) {
         });
 
         logActivity({
-          action: 'AI Extraction Re-run',
+          action: 'Demo Extraction Re-run',
           category: 'Extraction',
           claimId,
-          description: `Simulated OCR re-extraction executed for ${claimId}.`,
+          description: `Stored demo extraction sample refreshed for ${claimId}.`,
           severity: 'info'
         });
 
