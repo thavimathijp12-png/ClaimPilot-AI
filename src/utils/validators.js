@@ -27,7 +27,7 @@ const isValidDateOnly = (value) => {
 
 const dateOnly = (message) => z.string().refine(isValidDateOnly, { message });
 const optionalDateOnly = z.preprocess(
-  (value) => value === '' ? undefined : value,
+  (value) => value === '' || value === null ? undefined : value,
   dateOnly('Invalid date of birth. Use YYYY-MM-DD.').optional()
 );
 
@@ -63,7 +63,9 @@ export const claimSchema = z.object({
       .positive({ message: 'Claim amount must be greater than ₹0.00.' })
   ),
   copayAmount: z.preprocess(
-    (value) => value === '' || value === undefined ? undefined : Number(value),
+    (value) => value === '' || value === null || value === undefined || (typeof value === 'string' && value.trim() === '')
+      ? undefined
+      : Number(value),
     z.number({ invalid_type_error: 'Copay must be a valid number.' })
       .finite({ message: 'Copay must be a finite number.' })
       .nonnegative({ message: 'Copay amount cannot be negative.' })
