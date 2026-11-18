@@ -217,7 +217,7 @@ export function DashboardPage() {
           </div>
         </div>
 
-        <div className="inline-flex items-center p-1 bg-slate-100 rounded-lg border border-slate-200/80 text-xs">
+        <div className="inline-flex w-full max-w-full sm:w-auto items-center overflow-x-auto p-1 bg-slate-100 rounded-lg border border-slate-200/80 text-xs">
           {[
             { id: '7d', label: '7 Days' },
             { id: '30d', label: '30 Days' },
@@ -229,7 +229,7 @@ export function DashboardPage() {
               key={r.id}
               type="button"
               onClick={() => setDateRange(r.id)}
-              className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+              className={`shrink-0 whitespace-nowrap px-2.5 py-1 rounded-md font-semibold transition-all ${
                 dateRange === r.id
                   ? 'bg-white text-primary-700 shadow-2xs'
                   : 'text-slate-600 hover:text-navy hover:bg-slate-200/60'
@@ -280,7 +280,7 @@ export function DashboardPage() {
       {/* Analytics Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Trend Area Chart */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 min-w-0">
           <ChartCard
             title={dateRange === '7d' ? 'Daily Claims Processing Trend' : dateRange === '30d' ? 'Weekly Claims Processing Trend' : 'Monthly Claims Processing Trend'}
             subtitle="Submitted claims and approvals in the selected operational window."
@@ -331,7 +331,7 @@ export function DashboardPage() {
         </div>
 
         {/* Data Quality / Status Distribution */}
-        <div>
+        <div className="min-w-0">
           <ChartCard
             title="DataGuard IQ Health Index"
             subtitle="Real-time automated data validation score"
@@ -405,7 +405,7 @@ export function DashboardPage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full min-w-[700px] text-left text-xs">
               <thead className="bg-slate-50/70 border-b border-slate-100 text-slate-500 uppercase tracking-wider font-semibold">
                 <tr>
                   <th className="px-4 py-2.5">Claim ID</th>

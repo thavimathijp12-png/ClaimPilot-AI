@@ -6,20 +6,22 @@ import { NotificationDropdown } from './NotificationDropdown';
 import { UserProfileDropdown } from './UserProfileDropdown';
 import { GlobalSearchModal } from './GlobalSearchModal';
 
-export function AppTopbar({ onToggleSidebar, onOpenShortcuts }) {
+export function AppTopbar({ onToggleSidebar, onOpenShortcuts, sidebarOpen = false }) {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const navigate = useNavigate();
 
   return (
     <>
-      <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200/90 shadow-subtle px-4 sm:px-6 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200/90 shadow-subtle px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4">
         {/* Left Section: Mobile Menu & Breadcrumbs */}
-        <div className="flex items-center gap-3">
+        <div className="min-w-0 flex items-center gap-2 sm:gap-3">
           <button
             type="button"
             onClick={onToggleSidebar}
             className="lg:hidden p-2 rounded-lg text-slate-500 hover:text-navy hover:bg-slate-100 transition-colors"
             aria-label="Toggle navigation menu"
+            aria-controls="app-sidebar"
+            aria-expanded={sidebarOpen}
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -28,11 +30,12 @@ export function AppTopbar({ onToggleSidebar, onOpenShortcuts }) {
         </div>
 
         {/* Right Section: Search, Action, Notifications, User Profile */}
-        <div className="flex items-center gap-2.5 sm:gap-3.5">
+        <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-3.5">
           {/* Global Search Button / Trigger */}
           <button
             type="button"
             onClick={() => setSearchModalOpen(true)}
+            aria-label="Search claims and documents"
             className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-400 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors group"
             title="Search claims, documents, and rules (Ctrl+K)"
           >
