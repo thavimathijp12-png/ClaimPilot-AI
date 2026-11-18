@@ -210,11 +210,19 @@ export function ClaimsPage() {
   };
 
   const handleFieldChange = (field, value) => {
-    setFormData((current) => ({ ...current, [field]: value }));
+    const nextFormData = { ...formData, [field]: value };
+    setFormData(nextFormData);
     setFormErrors((current) => {
-      if (!current[field]) return current;
+      if (Object.keys(current).length === 0) return current;
+      const { errors: validationErrors } = validateClaimForm(nextFormData);
       const next = { ...current };
-      delete next[field];
+      Object.keys(current).forEach((errorField) => {
+        if (validationErrors[errorField]) {
+          next[errorField] = validationErrors[errorField];
+        } else {
+          delete next[errorField];
+        }
+      });
       return next;
     });
   };
