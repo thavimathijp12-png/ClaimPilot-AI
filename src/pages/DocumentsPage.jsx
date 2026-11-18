@@ -388,25 +388,25 @@ export function DocumentsPage() {
                       <td className="py-1.5 font-medium">Laparoscopic Cholecystectomy Operating Suite</td>
                       <td className="py-1.5 font-mono text-slate-500">47562</td>
                       <td className="py-1.5 text-right">1</td>
-                      <td className="py-1.5 text-right font-semibold">$8,450.00</td>
+                      <td className="py-1.5 text-right font-semibold">₹8,450.00</td>
                     </tr>
                     <tr>
                       <td className="py-1.5 font-medium">General Anesthesia Administration (3.5 hrs)</td>
                       <td className="py-1.5 font-mono text-slate-500">00790</td>
                       <td className="py-1.5 text-right">1</td>
-                      <td className="py-1.5 text-right font-semibold">$2,650.00</td>
+                      <td className="py-1.5 text-right font-semibold">₹2,650.00</td>
                     </tr>
                     <tr>
                       <td className="py-1.5 font-medium">Semi-Private Inpatient Room & Board (5 nights)</td>
                       <td className="py-1.5 font-mono text-slate-500">REV-0120</td>
                       <td className="py-1.5 text-right">5</td>
-                      <td className="py-1.5 text-right font-semibold">$3,250.00</td>
+                      <td className="py-1.5 text-right font-semibold">₹3,250.00</td>
                     </tr>
                     <tr>
                       <td className="py-1.5 font-medium">Post-Op Diagnostic Abdominal Ultrasound</td>
                       <td className="py-1.5 font-mono text-slate-500">76705</td>
                       <td className="py-1.5 text-right">1</td>
-                      <td className="py-1.5 text-right font-semibold">$500.50</td>
+                      <td className="py-1.5 text-right font-semibold">₹500.50</td>
                     </tr>
                   </tbody>
                   <tfoot>
@@ -414,7 +414,7 @@ export function DocumentsPage() {
                       <td colSpan={3} className="py-2 text-right">
                         TOTAL BILLED CHARGES:
                       </td>
-                      <td className="py-2 text-right text-sm text-navy">$14,850.50</td>
+                      <td className="py-2 text-right text-sm text-navy font-bold">₹14,850.50</td>
                     </tr>
                   </tfoot>
                 </table>

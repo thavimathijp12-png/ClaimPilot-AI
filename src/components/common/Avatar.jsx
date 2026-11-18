@@ -89,7 +89,7 @@ export function Avatar({
       alt={alt || name || 'User Avatar'}
       onError={() => setHasError(true)}
       className={cn(
-        'rounded-full object-cover border border-slate-200 flex-shrink-0 select-none',
+        'rounded-full object-cover object-top border border-slate-200 flex-shrink-0 select-none',
         currentSizeClass,
         className
       )}

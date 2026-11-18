@@ -60,7 +60,7 @@ export const claimSchema = z.object({
     (value) => typeof value === 'string' && value.trim() === '' ? Number.NaN : Number(value),
     z.number({ invalid_type_error: 'Claim amount must be a valid number.' })
       .finite({ message: 'Claim amount must be a finite number.' })
-      .positive({ message: 'Claim amount must be greater than $0.00.' })
+      .positive({ message: 'Claim amount must be greater than ₹0.00.' })
   ),
   copayAmount: z.preprocess(
     (value) => value === '' || value === undefined ? undefined : Number(value),

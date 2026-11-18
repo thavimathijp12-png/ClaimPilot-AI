@@ -55,6 +55,7 @@ export function DashboardPage() {
   const [dateRange, setDateRange] = useState('30d');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastSynced, setLastSynced] = useState('just now');
+  const [queueFilter, setQueueFilter] = useState('all');
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -128,7 +129,25 @@ export function DashboardPage() {
     return buckets;
   }, [claims, dateRange, filteredClaims]);
 
-  const recentClaims = filteredClaims.slice(0, 5);
+  // Filtered recent claims queue
+  const filteredRecentClaims = useMemo(() => {
+    let list = claims;
+    if (queueFilter === 'pending') {
+      list = claims.filter(c => c.status === 'Pending Review' || c.status === 'Under AI Audit');
+    } else if (queueFilter === 'flagged') {
+      list = claims.filter(c => (c.dataQualityScore < 85) || c.status === 'Correction Requested');
+    } else if (queueFilter === 'approved') {
+      list = claims.filter(c => c.status === 'Approved');
+    }
+    return list.slice(0, 6);
+  }, [claims, queueFilter]);
+
+  const queueCounts = useMemo(() => ({
+    all: claims.length,
+    pending: claims.filter(c => c.status === 'Pending Review' || c.status === 'Under AI Audit').length,
+    flagged: claims.filter(c => (c.dataQualityScore < 85) || c.status === 'Correction Requested').length,
+    approved: claims.filter(c => c.status === 'Approved').length,
+  }), [claims]);
 
   const currentDateFormatted = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -385,19 +404,47 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Claims Table */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200/90 shadow-subtle overflow-hidden">
-          <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+          <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h2 className="text-sm sm:text-base font-bold text-navy">Recent Claims Queue</h2>
               <p className="text-xs text-content-muted mt-0.5">Latest claims processed or awaiting operator verification</p>
             </div>
-            <button
-              type="button"
-              onClick={() => navigate('/claims')}
-              className="text-xs font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1"
-            >
-              <span>View All</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="inline-flex items-center p-0.5 bg-slate-100 rounded-lg border border-slate-200/80 text-xs">
+                {[
+                  { id: 'all', label: 'All', count: queueCounts.all },
+                  { id: 'pending', label: 'Pending', count: queueCounts.pending },
+                  { id: 'flagged', label: 'Flagged', count: queueCounts.flagged },
+                  { id: 'approved', label: 'Approved', count: queueCounts.approved },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setQueueFilter(tab.id)}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all flex items-center gap-1 ${
+                      queueFilter === tab.id
+                        ? 'bg-white text-primary-700 shadow-2xs'
+                        : 'text-slate-600 hover:text-navy hover:bg-slate-200/50'
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${queueFilter === tab.id ? 'bg-primary-50 text-primary-700' : 'bg-slate-200 text-slate-600'}`}>
+                      {tab.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => navigate('/claims')}
+                className="text-xs font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1 ml-1"
+              >
+                <span>Registry</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -413,34 +460,42 @@ export function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {recentClaims.map((claim) => (
-                  <tr
-                    key={claim.id}
-                    onClick={() => navigate(`/claims/${claim.id}`)}
-                    className="hover:bg-slate-50/70 cursor-pointer transition-colors"
-                  >
-                    <td className="px-4 py-3 font-semibold text-primary-600 font-mono">
-                      {claim.id}
-                    </td>
-                    <td className="px-4 py-3 font-medium text-slate-800">
-                      {claim.claimantName}
-                    </td>
-                    <td className="px-4 py-3 text-slate-500 max-w-[180px] truncate">
-                      {claim.hospitalName}
-                    </td>
-                    <td className="px-4 py-3 text-right font-semibold text-navy">
-                      {formatCurrency(claim.claimAmount)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={claim.status} size="sm" />
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full text-[11px] border border-teal-200">
-                        {claim.dataQualityScore}%
-                      </span>
+                {filteredRecentClaims.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="py-8 text-center text-xs text-slate-400">
+                      No claims currently match the '{queueFilter}' filter queue.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredRecentClaims.map((claim) => (
+                    <tr
+                      key={claim.id}
+                      onClick={() => navigate(`/claims/${claim.id}`)}
+                      className="hover:bg-slate-50/70 cursor-pointer transition-colors"
+                    >
+                      <td className="px-4 py-3 font-semibold text-primary-600 font-mono">
+                        {claim.id}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-slate-800">
+                        {claim.claimantName}
+                      </td>
+                      <td className="px-4 py-3 text-slate-500 max-w-[180px] truncate">
+                        {claim.hospitalName}
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold text-navy">
+                        {formatCurrency(claim.claimAmount)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={claim.status} size="sm" />
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className="font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full text-[11px] border border-teal-200">
+                          {claim.dataQualityScore}%
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

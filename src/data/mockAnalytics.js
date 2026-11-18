@@ -1,10 +1,10 @@
 export const MONTHLY_TREND_DATA = [
-  { month: 'Jun', totalClaims: 1420, approved: 1210, rejected: 140, correction: 70, volumeUsd: 4200000 },
-  { month: 'Jul', totalClaims: 1580, approved: 1360, rejected: 150, correction: 70, volumeUsd: 4850000 },
-  { month: 'Aug', totalClaims: 1710, approved: 1490, rejected: 130, correction: 90, volumeUsd: 5300000 },
-  { month: 'Sep', totalClaims: 1890, approved: 1650, rejected: 160, correction: 80, volumeUsd: 5920000 },
-  { month: 'Oct', totalClaims: 2150, approved: 1880, rejected: 170, correction: 100, volumeUsd: 6810000 },
-  { month: 'Nov', totalClaims: 2340, approved: 2060, rejected: 180, correction: 100, volumeUsd: 7420000 },
+  { month: 'Jun', totalClaims: 1420, approved: 1210, rejected: 140, correction: 70, volumeInr: 42000000, volumeUsd: 42000000 },
+  { month: 'Jul', totalClaims: 1580, approved: 1360, rejected: 150, correction: 70, volumeInr: 48500000, volumeUsd: 48500000 },
+  { month: 'Aug', totalClaims: 1710, approved: 1490, rejected: 130, correction: 90, volumeInr: 53000000, volumeUsd: 53000000 },
+  { month: 'Sep', totalClaims: 1890, approved: 1650, rejected: 160, correction: 80, volumeInr: 59200000, volumeUsd: 59200000 },
+  { month: 'Oct', totalClaims: 2150, approved: 1880, rejected: 170, correction: 100, volumeInr: 68100000, volumeUsd: 68100000 },
+  { month: 'Nov', totalClaims: 2340, approved: 2060, rejected: 180, correction: 100, volumeInr: 74200000, volumeUsd: 74200000 },
 ];
 
 export const STATUS_DISTRIBUTION_DATA = [

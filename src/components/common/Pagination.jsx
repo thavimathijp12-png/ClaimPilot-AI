@@ -10,12 +10,18 @@ export function Pagination({
   onPageChange,
   className = '',
 }) {
-  if (totalPages <= 1 && totalItems <= pageSize) return null;
+  if (totalItems === 0 || (totalPages <= 1 && totalItems <= pageSize)) return null;
 
-  const pageCount = Math.max(1, totalPages);
-  const activePage = Math.min(Math.max(1, currentPage), pageCount);
-  const startItem = totalItems === 0 ? 0 : (activePage - 1) * pageSize + 1;
-  const endItem = Math.min(activePage * pageSize, totalItems);
+  const safeTotalPages = Math.max(1, totalPages);
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), safeTotalPages);
+  const startItem = (safeCurrentPage - 1) * pageSize + 1;
+  const endItem = Math.min(safeCurrentPage * pageSize, totalItems);
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= safeTotalPages && page !== safeCurrentPage && onPageChange) {
+      onPageChange(page);
+    }
+  };
 
   return (
     <div className={cn('flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-white border-t border-slate-200 text-xs text-slate-500', className)}>
@@ -28,8 +34,8 @@ export function Pagination({
       <div className="flex items-center gap-1.5">
         <button
           type="button"
-          onClick={() => onPageChange(activePage - 1)}
-          disabled={activePage <= 1}
+          onClick={() => handlePageChange(safeCurrentPage - 1)}
+          disabled={safeCurrentPage <= 1}
           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           aria-label="Previous page"
         >
@@ -38,8 +44,8 @@ export function Pagination({
         </button>
 
         <div className="flex items-center gap-1 px-1">
-          {Array.from({ length: pageCount }, (_, i) => i + 1)
-            .filter(p => p === 1 || p === pageCount || Math.abs(p - activePage) <= 1)
+          {Array.from({ length: safeTotalPages }, (_, i) => i + 1)
+            .filter(p => p === 1 || p === safeTotalPages || Math.abs(p - safeCurrentPage) <= 1)
             .map((page, idx, arr) => {
               const prevPage = arr[idx - 1];
               const showEllipsis = prevPage && page - prevPage > 1;
@@ -49,14 +55,14 @@ export function Pagination({
                   {showEllipsis && <span className="px-1 text-slate-400">...</span>}
                   <button
                     type="button"
-                    onClick={() => onPageChange(page)}
+                    onClick={() => handlePageChange(page)}
                     className={cn(
                       'w-7 h-7 flex items-center justify-center rounded-md font-medium transition-colors',
-                      activePage === page
+                      safeCurrentPage === page
                         ? 'bg-primary-600 text-white shadow-sm'
                         : 'text-slate-600 hover:bg-slate-100'
                     )}
-                    aria-current={activePage === page ? 'page' : undefined}
+                    aria-current={safeCurrentPage === page ? 'page' : undefined}
                     aria-label={`Go to page ${page}`}
                   >
                     {page}
@@ -68,8 +74,8 @@ export function Pagination({
 
         <button
           type="button"
-          onClick={() => onPageChange(activePage + 1)}
-          disabled={activePage >= pageCount}
+          onClick={() => handlePageChange(safeCurrentPage + 1)}
+          disabled={safeCurrentPage >= safeTotalPages}
           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           aria-label="Next page"
         >
