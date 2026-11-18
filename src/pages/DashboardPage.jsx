@@ -83,6 +83,9 @@ export function DashboardPage() {
   const approvedCount = filteredClaims.filter(c => c.status === 'Approved').length;
   const rejectedCount = filteredClaims.filter(c => c.status === 'Rejected').length;
   const totalVolume = filteredClaims.reduce((acc, curr) => acc + (curr.claimAmount || 0), 0);
+  const pendingSummary = pendingCount === 0
+    ? 'No claims await clinical review or OCR verification.'
+    : `${pendingCount} claim${pendingCount === 1 ? '' : 's'} await clinical review or automated OCR verification.`;
 
   const trendData = useMemo(() => {
     const today = new Date();
@@ -171,7 +174,9 @@ export function DashboardPage() {
             Welcome back, {currentUser?.name}
           </h1>
           <p className="text-xs sm:text-sm text-content-muted mt-1 max-w-2xl leading-normal">
-            Operational claims queue is healthy. <strong>{pendingCount} claims</strong> currently await clinical review or automated OCR verification.
+            {filteredClaims.length === 0
+              ? 'No claims were submitted in this operational window.'
+              : pendingSummary}
           </p>
         </div>
 
@@ -283,7 +288,7 @@ export function DashboardPage() {
           onClick={() => navigate('/claims?status=Approved')}
         />
         <StatCard
-          title="Rejected / Disputed"
+          title="Rejected Claims"
           value={rejectedCount}
           subtitle="Compliance or coverage non-match"
           icon={XCircle}
@@ -310,38 +315,53 @@ export function DashboardPage() {
               </button>
             }
           >
-            <ResponsiveContainer width="100%" height={260}>
-              <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2563EB" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorApproved" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0D9488" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#0D9488" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#64748B' }} stroke="#CBD5E1" minTickGap={12} />
-                <YAxis tick={{ fontSize: 11, fill: '#64748B' }} stroke="#CBD5E1" allowDecimals={false} />
-                <Tooltip
-                  formatter={(val) => [Number(val).toLocaleString(), 'Claims']}
-                  contentStyle={{
-                    backgroundColor: '#10233F',
-                    borderRadius: '8px',
-                    color: '#FFF',
-                    fontSize: '12px',
-                    border: 'none',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-                  }}
-                  itemStyle={{ color: '#F1F5F9' }}
-                />
-                <Area type="monotone" dataKey="totalClaims" name="Total Ingested" stroke="#2563EB" strokeWidth={2} fillOpacity={1} fill="url(#colorTotal)" />
-                <Area type="monotone" dataKey="approved" name="Approved" stroke="#0D9488" strokeWidth={2} fillOpacity={1} fill="url(#colorApproved)" />
-                <Legend verticalAlign="bottom" height={28} />
-              </AreaChart>
-            </ResponsiveContainer>
+            {filteredClaims.length === 0 ? (
+              <div className="h-[260px] flex flex-col items-center justify-center text-center px-4" role="status">
+                <FileText className="w-8 h-8 text-slate-300 mb-2" aria-hidden="true" />
+                <p className="text-sm font-semibold text-slate-700">No claims in this window</p>
+                <p className="text-xs text-content-muted mt-1">Choose a wider date range or create a claim to see activity here.</p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/claims?action=create')}
+                  className="mt-3 text-xs font-semibold text-primary-600 hover:text-primary-700"
+                >
+                  Create a claim
+                </button>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={260}>
+                <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2563EB" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorApproved" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0D9488" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#0D9488" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#64748B' }} stroke="#CBD5E1" minTickGap={12} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748B' }} stroke="#CBD5E1" allowDecimals={false} />
+                  <Tooltip
+                    formatter={(val) => [Number(val).toLocaleString(), 'Claims']}
+                    contentStyle={{
+                      backgroundColor: '#10233F',
+                      borderRadius: '8px',
+                      color: '#FFF',
+                      fontSize: '12px',
+                      border: 'none',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                    }}
+                    itemStyle={{ color: '#F1F5F9' }}
+                  />
+                  <Area type="monotone" dataKey="totalClaims" name="Total Ingested" stroke="#2563EB" strokeWidth={2} fillOpacity={1} fill="url(#colorTotal)" />
+                  <Area type="monotone" dataKey="approved" name="Approved" stroke="#0D9488" strokeWidth={2} fillOpacity={1} fill="url(#colorApproved)" />
+                  <Legend verticalAlign="bottom" height={28} />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </ChartCard>
         </div>
 
