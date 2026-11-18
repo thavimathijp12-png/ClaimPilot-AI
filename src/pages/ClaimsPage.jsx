@@ -7,11 +7,6 @@ import {
   Download,
   Eye,
   Edit2,
-  FileText,
-  Filter,
-  CheckCircle2,
-  AlertTriangle,
-  RotateCcw,
   Copy,
   ShieldCheck,
 } from 'lucide-react';
@@ -28,7 +23,30 @@ import { Modal } from '../components/common/Modal';
 import { FormField } from '../components/common/FormField';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { exportToCSV } from '../services/exportService';
+import { storage } from '../services/storageService';
 import { validateClaimForm } from '../utils/validators';
+
+const isValidDensity = (value) => ['compact', 'comfortable', 'spacious'].includes(value);
+
+function getSavedDensity() {
+  const savedDensity = storage.get('table_density', null, isValidDensity);
+  if (savedDensity) return savedDensity;
+
+  try {
+    const legacyDensity = window.localStorage.getItem('claimpilot_table_density');
+    if (isValidDensity(legacyDensity)) {
+      storage.set('table_density', legacyDensity);
+      return legacyDensity;
+    }
+    if (legacyDensity) {
+      console.warn('Invalid saved claim table density; using the comfortable layout.');
+      window.localStorage.removeItem('claimpilot_table_density');
+    }
+  } catch (error) {
+    console.warn('Unable to read saved claim table density:', error);
+  }
+  return 'comfortable';
+}
 
 export function ClaimsPage() {
   const { claims, createClaim, updateClaim } = useClaims();
@@ -44,13 +62,12 @@ export function ClaimsPage() {
   const [sortDirection, setSortDirection] = useState('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
-  const [density, setDensity] = useState(
-    () => localStorage.getItem('claimpilot_table_density') || 'comfortable'
-  );
+  const [density, setDensity] = useState(getSavedDensity);
 
   const handleDensityChange = (newDensity) => {
+    if (!isValidDensity(newDensity)) return;
     setDensity(newDensity);
-    localStorage.setItem('claimpilot_table_density', newDensity);
+    storage.set('table_density', newDensity);
   };
 
   // Modal State: Create / Edit
@@ -82,10 +99,35 @@ export function ClaimsPage() {
     if (searchParams.get('action') === 'create') {
       setEditingClaim(null);
       setModalOpen(true);
+      setSearchParams((params) => {
+        const nextParams = new URLSearchParams(params);
+        nextParams.delete('action');
+        return nextParams;
+      }, { replace: true });
     }
   }, [searchParams]);
 
-  // Reset pagination to first page whenever search query, status filter, or type filter changes
+  useEffect(() => {
+    const nextSearch = searchParams.get('q') || '';
+    const nextStatus = searchParams.get('status') || 'ALL';
+    const nextType = searchParams.get('type') || 'ALL';
+    setSearchQuery((current) => current === nextSearch ? current : nextSearch);
+    setStatusFilter((current) => current === nextStatus ? current : nextStatus);
+    setTypeFilter((current) => current === nextType ? current : nextType);
+  }, [searchParams]);
+
+  useEffect(() => {
+    setSearchParams((params) => {
+      const nextParams = new URLSearchParams(params);
+      const filters = { q: searchQuery.trim(), status: statusFilter, type: typeFilter };
+      Object.entries(filters).forEach(([key, value]) => {
+        if (!value || value === 'ALL') nextParams.delete(key);
+        else nextParams.set(key, value);
+      });
+      return nextParams.toString() === params.toString() ? params : nextParams;
+    }, { replace: true });
+  }, [searchQuery, statusFilter, typeFilter, setSearchParams]);
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, statusFilter, typeFilter]);
@@ -151,20 +193,30 @@ export function ClaimsPage() {
     }
 
     setFormErrors({});
+    const claimData = {
+      ...validation.data,
+      copayAmount: validation.data.copayAmount ?? 0,
+    };
 
     if (editingClaim) {
-      updateClaim(editingClaim.id, {
-        ...formData,
-        claimAmount: parseFloat(formData.claimAmount),
-        copayAmount: parseFloat(formData.copayAmount) || 0,
-      });
+      updateClaim(editingClaim.id, claimData);
       toast.success('Claim Updated', `Record for ${editingClaim.id} updated successfully.`);
     } else {
-      const created = createClaim(formData);
+      const created = createClaim(claimData);
       toast.success('Claim Registered', `New claim created with reference ${created.id}.`);
     }
 
     setModalOpen(false);
+  };
+
+  const handleFieldChange = (field, value) => {
+    setFormData((current) => ({ ...current, [field]: value }));
+    setFormErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
   };
 
   // Sorting Handler
@@ -196,27 +248,27 @@ export function ClaimsPage() {
 
   const sortedClaims = useMemo(() => {
     return [...filteredClaims].sort((a, b) => {
-      let aVal = a[sortColumn];
-      let bVal = b[sortColumn];
+      const aValue = a[sortColumn];
+      const bValue = b[sortColumn];
+      let comparison = 0;
 
-      if (sortColumn === 'claimAmount') {
-        aVal = Number(aVal) || 0;
-        bVal = Number(bVal) || 0;
-      } else if (typeof aVal === 'string') {
-        aVal = aVal.toLowerCase();
-        bVal = (bVal || '').toLowerCase();
+      if (sortColumn === 'claimAmount' || sortColumn === 'dataQualityScore') {
+        comparison = (Number(aValue) || 0) - (Number(bValue) || 0);
+      } else if (sortColumn === 'submissionDate') {
+        comparison = (Date.parse(aValue) || 0) - (Date.parse(bValue) || 0);
+      } else {
+        comparison = String(aValue ?? '').localeCompare(String(bValue ?? ''), undefined, {
+          numeric: true,
+          sensitivity: 'base',
+        });
       }
 
-      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
+      return sortDirection === 'asc' ? comparison : -comparison;
     });
   }, [filteredClaims, sortColumn, sortDirection]);
 
   // Pagination Slice
   const totalPages = Math.ceil(sortedClaims.length / pageSize) || 1;
-
-  // Ensure currentPage does not exceed totalPages when dataset shrinks
   useEffect(() => {
     if (currentPage > totalPages) {
       setCurrentPage(totalPages);
@@ -526,11 +578,15 @@ export function ClaimsPage() {
               required
               error={formErrors.claimantName}
               helperText="e.g., Jonathan Sterling (demo record)"
+              id="claimant-name"
             >
               <input
+                id="claimant-name"
                 type="text"
                 value={formData.claimantName}
-                onChange={(e) => setFormData({ ...formData, claimantName: e.target.value })}
+                onChange={(e) => handleFieldChange('claimantName', e.target.value)}
+                aria-invalid={Boolean(formErrors.claimantName)}
+                aria-describedby={formErrors.claimantName ? 'claimant-name-error' : undefined}
                 placeholder="Enter patient full name"
                 className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-primary-500"
               />
@@ -541,11 +597,15 @@ export function ClaimsPage() {
               required
               error={formErrors.policyNumber}
               helperText="e.g., POL-BCBS-9042"
+              id="policy-number"
             >
               <input
+                id="policy-number"
                 type="text"
                 value={formData.policyNumber}
-                onChange={(e) => setFormData({ ...formData, policyNumber: e.target.value })}
+                onChange={(e) => handleFieldChange('policyNumber', e.target.value)}
+                aria-invalid={Boolean(formErrors.policyNumber)}
+                aria-describedby={formErrors.policyNumber ? 'policy-number-error' : undefined}
                 placeholder="POL-XXXX-0000"
                 className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-primary-500 font-mono"
               />
@@ -553,11 +613,14 @@ export function ClaimsPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField label="Hospital / Facility Name" required error={formErrors.hospitalName}>
+            <FormField label="Hospital / Facility Name" required error={formErrors.hospitalName} id="hospital-name">
               <input
+                id="hospital-name"
                 type="text"
                 value={formData.hospitalName}
-                onChange={(e) => setFormData({ ...formData, hospitalName: e.target.value })}
+                onChange={(e) => handleFieldChange('hospitalName', e.target.value)}
+                aria-invalid={Boolean(formErrors.hospitalName)}
+                aria-describedby={formErrors.hospitalName ? 'hospital-name-error' : undefined}
                 placeholder="e.g., Metropolitan Memorial Hospital"
                 className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-primary-500"
               />
@@ -566,7 +629,7 @@ export function ClaimsPage() {
             <FormField label="Encounter / Claim Type">
               <select
                 value={formData.claimType}
-                onChange={(e) => setFormData({ ...formData, claimType: e.target.value })}
+                onChange={(e) => handleFieldChange('claimType', e.target.value)}
                 className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-primary-500 bg-white"
               >
                 <option value="Inpatient">Inpatient Care</option>
@@ -584,23 +647,32 @@ export function ClaimsPage() {
               required
               error={formErrors.claimAmount}
               helperText="Total billed charge"
+              id="claim-amount"
             >
               <input
+                id="claim-amount"
                 type="number"
+                min="0.01"
                 step="0.01"
                 value={formData.claimAmount}
-                onChange={(e) => setFormData({ ...formData, claimAmount: e.target.value })}
+                onChange={(e) => handleFieldChange('claimAmount', e.target.value)}
+                aria-invalid={Boolean(formErrors.claimAmount)}
+                aria-describedby={formErrors.claimAmount ? 'claim-amount-error' : undefined}
                 placeholder="0.00"
                 className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-primary-500 font-semibold"
               />
             </FormField>
 
-            <FormField label="Copay Obligation (₹)">
+            <FormField label="Copay Obligation (₹)" error={formErrors.copayAmount} id="copay-amount">
               <input
+                id="copay-amount"
                 type="number"
+                min="0"
                 step="0.01"
                 value={formData.copayAmount}
-                onChange={(e) => setFormData({ ...formData, copayAmount: e.target.value })}
+                onChange={(e) => handleFieldChange('copayAmount', e.target.value)}
+                aria-invalid={Boolean(formErrors.copayAmount)}
+                aria-describedby={formErrors.copayAmount ? 'copay-amount-error' : undefined}
                 placeholder="50.00"
                 className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-primary-500"
               />
@@ -609,7 +681,7 @@ export function ClaimsPage() {
             <FormField label="Initial Status">
               <select
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                onChange={(e) => handleFieldChange('status', e.target.value)}
                 className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-primary-500 bg-white"
               >
                 <option value="Pending Review">Pending Review</option>
@@ -622,20 +694,26 @@ export function ClaimsPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField label="Admission / Service Date">
+            <FormField label="Admission / Service Date" required error={formErrors.admissionDate} id="admission-date">
               <input
+                id="admission-date"
                 type="date"
                 value={formData.admissionDate}
-                onChange={(e) => setFormData({ ...formData, admissionDate: e.target.value })}
+                onChange={(e) => handleFieldChange('admissionDate', e.target.value)}
+                aria-invalid={Boolean(formErrors.admissionDate)}
+                aria-describedby={formErrors.admissionDate ? 'admission-date-error' : undefined}
                 className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-primary-500"
               />
             </FormField>
 
-            <FormField label="Discharge Date" error={formErrors.dischargeDate}>
+            <FormField label="Discharge Date" required error={formErrors.dischargeDate} id="discharge-date">
               <input
+                id="discharge-date"
                 type="date"
                 value={formData.dischargeDate}
-                onChange={(e) => setFormData({ ...formData, dischargeDate: e.target.value })}
+                onChange={(e) => handleFieldChange('dischargeDate', e.target.value)}
+                aria-invalid={Boolean(formErrors.dischargeDate)}
+                aria-describedby={formErrors.dischargeDate ? 'discharge-date-error' : undefined}
                 className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-primary-500"
               />
             </FormField>
@@ -645,7 +723,7 @@ export function ClaimsPage() {
             <textarea
               rows={3}
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) => handleFieldChange('description', e.target.value)}
               placeholder="Summary of medical procedures, diagnostic notes, or hospital admission context..."
               className="w-full text-xs p-3 border border-slate-200 rounded-lg focus:outline-none focus:border-primary-500 resize-none"
             />

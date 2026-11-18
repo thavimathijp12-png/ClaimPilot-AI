@@ -8,15 +8,33 @@ import { storage } from '../services/storageService';
 import { useAuth } from './AuthContext';
 
 const ClaimContext = createContext(null);
+const PENDING_ADJUDICATION_STATUSES = ['Pending Review', 'Under AI Audit'];
+
+const canAdjudicate = (claim) => claim && PENDING_ADJUDICATION_STATUSES.includes(claim.status);
+const isRecord = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+const hasStringFields = (value, fields) => isRecord(value) && fields.every((field) => typeof value[field] === 'string');
+const isStoredClaims = (value) => Array.isArray(value) && value.every((claim) => (
+  hasStringFields(claim, ['id', 'claimantName', 'policyNumber', 'hospitalName', 'claimType', 'status']) &&
+  Number.isFinite(Number(claim.claimAmount))
+));
+const isStoredDocuments = (value) => Array.isArray(value) && value.every((doc) => (
+  hasStringFields(doc, ['id', 'claimId', 'name', 'category', 'status'])
+));
+const isStoredActivities = (value) => Array.isArray(value) && value.every((activity) => (
+  hasStringFields(activity, ['id', 'timestamp', 'action', 'description', 'userName', 'category'])
+));
+const isStoredExtractions = (value) => isRecord(value) && Object.values(value).every((extraction) => (
+  isRecord(extraction) && Array.isArray(extraction.fields)
+));
 
 export function ClaimProvider({ children }) {
   const { currentUser } = useAuth();
 
-  const [claims, setClaims] = useState(() => storage.get('claims', INITIAL_CLAIMS));
-  const [documents, setDocuments] = useState(() => storage.get('documents', INITIAL_DOCUMENTS));
-  const [activities, setActivities] = useState(() => storage.get('activities', INITIAL_ACTIVITIES));
-  const [validations, setValidations] = useState(() => storage.get('validations', CLAIM_VALIDATION_RULES));
-  const [extractions, setExtractions] = useState(() => storage.get('extractions', MOCK_EXTRACTION_SETS));
+  const [claims, setClaims] = useState(() => storage.get('claims', INITIAL_CLAIMS, isStoredClaims));
+  const [documents, setDocuments] = useState(() => storage.get('documents', INITIAL_DOCUMENTS, isStoredDocuments));
+  const [activities, setActivities] = useState(() => storage.get('activities', INITIAL_ACTIVITIES, isStoredActivities));
+  const [validations, setValidations] = useState(() => storage.get('validations', CLAIM_VALIDATION_RULES, isRecord));
+  const [extractions, setExtractions] = useState(() => storage.get('extractions', MOCK_EXTRACTION_SETS, isStoredExtractions));
   const [dataGuardSummary, setDataGuardSummary] = useState(() => storage.get('dataguard_summary', DATAGUARD_SYSTEM_OVERVIEW));
 
   // Sync to storage
@@ -180,19 +198,44 @@ export function ClaimProvider({ children }) {
     });
   };
 
+  const addClaimComment = (id, comment) => {
+    const text = comment?.trim();
+    const claim = claims.find((item) => item.id === id);
+    if (!claim || !text) return false;
+
+    const timelineItem = {
+      id: `evt-${Date.now()}`,
+      date: new Date().toISOString(),
+      title: 'Reviewer Comment Added',
+      user: currentUser?.name || 'Authorized User',
+      description: text,
+    };
+
+    setClaims((prev) => prev.map((item) => item.id === id
+      ? { ...item, timeline: [timelineItem, ...(item.timeline || [])], reviewNotes: text }
+      : item
+    ));
+    logActivity({
+      action: 'Reviewer Comment Added',
+      category: 'Claims',
+      claimId: id,
+      description: `Added a reviewer note to claim ${id}: ${text}`,
+      severity: 'info',
+    });
+    return true;
+  };
+
   const approveClaim = (id, notes = '') => {
-    let approvedClaimName = '';
-    let amount = 0;
+    const claim = claims.find((item) => item.id === id);
+    if (!canAdjudicate(claim)) return false;
 
     setClaims(prev => prev.map(c => {
       if (c.id === id) {
-        approvedClaimName = c.claimantName;
-        amount = c.claimAmount;
         return {
           ...c,
           status: 'Approved',
           approvedAmount: c.claimAmount,
-          reviewNotes: notes || c.reviewNotes || 'Approved by clinical reviewer.',
+          reviewNotes: notes.trim() || c.reviewNotes || 'Approved by clinical reviewer.',
           timeline: [
             {
               id: `evt-${Date.now()}`,
@@ -212,29 +255,30 @@ export function ClaimProvider({ children }) {
       action: 'Claim Approved',
       category: 'Approvals',
       claimId: id,
-      description: `Approved claim ${id} for ${approvedClaimName} (₹${amount.toLocaleString('en-IN')}).`,
+      description: `Approved claim ${id} for ${claim.claimantName} (₹${Number(claim.claimAmount).toLocaleString('en-IN')}).`,
       severity: 'success'
     });
+    return true;
   };
 
   const rejectClaim = (id, reason) => {
-    let claimantName = '';
+    const claim = claims.find((item) => item.id === id);
+    if (!canAdjudicate(claim) || !reason?.trim()) return false;
 
     setClaims(prev => prev.map(c => {
       if (c.id === id) {
-        claimantName = c.claimantName;
         return {
           ...c,
           status: 'Rejected',
           approvedAmount: 0,
-          reviewNotes: reason,
+          reviewNotes: reason.trim(),
           timeline: [
             {
               id: `evt-${Date.now()}`,
               date: new Date().toISOString(),
               title: 'Claim Rejected',
               user: currentUser?.name || 'Clinical Adjudicator',
-              description: `Reason for rejection: "${reason}"`
+              description: `Reason for rejection: "${reason.trim()}"`
             },
             ...(c.timeline || [])
           ]
@@ -247,28 +291,29 @@ export function ClaimProvider({ children }) {
       action: 'Claim Rejected',
       category: 'Approvals',
       claimId: id,
-      description: `Rejected claim ${id} for ${claimantName}. Reason: ${reason}`,
+      description: `Rejected claim ${id} for ${claim.claimantName}. Reason: ${reason.trim()}`,
       severity: 'error'
     });
+    return true;
   };
 
   const requestCorrection = (id, comment) => {
-    let claimantName = '';
+    const claim = claims.find((item) => item.id === id);
+    if (!canAdjudicate(claim) || !comment?.trim()) return false;
 
     setClaims(prev => prev.map(c => {
       if (c.id === id) {
-        claimantName = c.claimantName;
         return {
           ...c,
           status: 'Correction Requested',
-          reviewNotes: comment,
+          reviewNotes: comment.trim(),
           timeline: [
             {
               id: `evt-${Date.now()}`,
               date: new Date().toISOString(),
               title: 'Correction Requested',
               user: currentUser?.name || 'Clinical Adjudicator',
-              description: `Correction request: "${comment}"`
+              description: `Correction request: "${comment.trim()}"`
             },
             ...(c.timeline || [])
           ]
@@ -281,9 +326,10 @@ export function ClaimProvider({ children }) {
       action: 'Correction Requested',
       category: 'Approvals',
       claimId: id,
-      description: `Requested provider correction for ${id} (${claimantName}): ${comment}`,
+      description: `Requested provider correction for ${id} (${claim.claimantName}): ${comment.trim()}`,
       severity: 'warning'
     });
+    return true;
   };
 
   // Documents
@@ -291,16 +337,16 @@ export function ClaimProvider({ children }) {
     const newDocId = `DOC-${Date.now().toString().slice(-6)}`;
     const newDoc = {
       id: newDocId,
-      claimId: docData.claimId || 'CLM-2026-8910',
+      claimId: docData.claimId,
       name: docData.name,
       category: docData.category || 'Other Supporting Documents',
       fileType: docData.fileType || (docData.name.endsWith('.pdf') ? 'PDF' : docData.name.endsWith('.png') ? 'PNG' : 'JPG'),
       sizeBytes: docData.sizeBytes || 1450000,
       uploadedAt: new Date().toISOString(),
       uploadedBy: currentUser?.name || 'Marcus Chen',
-      status: 'Extracted',
+      status: 'Pending OCR',
       pageCount: docData.pageCount || 1,
-      confidenceScore: 97.5,
+      confidenceScore: null,
       previewUrl: docData.previewUrl || 'mock-document-preview',
       thumbnailType: docData.category === 'Hospital Bill' ? 'bill' : docData.category === 'Discharge Summary' ? 'summary' : docData.category === 'Prescription' ? 'rx' : 'form',
       description: docData.description || 'Uploaded supporting clinical document.'
@@ -422,7 +468,7 @@ export function ClaimProvider({ children }) {
     }));
 
     logActivity({
-      action: 'AI Extraction Verified',
+      action: 'Extraction Verified',
       category: 'Extraction',
       claimId,
       description: `Confirmed OCR extraction integrity for claim ${claimId}.`,
@@ -453,10 +499,10 @@ export function ClaimProvider({ children }) {
         });
 
         logActivity({
-          action: 'AI Extraction Re-run',
+          action: 'Demo Extraction Re-run',
           category: 'Extraction',
           claimId,
-          description: `Simulated OCR re-extraction executed for ${claimId}.`,
+          description: `Stored demo extraction sample refreshed for ${claimId}.`,
           severity: 'info'
         });
 
@@ -516,6 +562,7 @@ export function ClaimProvider({ children }) {
         dataGuardSummary,
         createClaim,
         updateClaim,
+        addClaimComment,
         approveClaim,
         rejectClaim,
         requestCorrection,

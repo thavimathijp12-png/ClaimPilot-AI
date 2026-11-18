@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useClaims } from '../context/ClaimContext';
 import { useToast } from '../hooks/useToast';
 import { useAuth } from '../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import {
   Sparkles,
   CheckCircle2,
-  AlertTriangle,
   RefreshCw,
   Edit2,
   Save,
@@ -15,7 +15,6 @@ import {
   ZoomIn,
   ZoomOut,
   ShieldAlert,
-  Info,
   FileText,
   UserCheck,
 } from 'lucide-react';
@@ -27,8 +26,11 @@ export function ExtractionReviewPage() {
   const { extractions, updateExtractionField, verifyExtraction, rerunExtraction, claims } = useClaims();
   const { currentUser } = useAuth();
   const toast = useToast();
+  const navigate = useNavigate();
 
-  const [selectedClaimId, setSelectedClaimId] = useState('CLM-2026-8910');
+  const [selectedClaimId, setSelectedClaimId] = useState(() => (
+    claims.find((claim) => extractions[claim.id])?.id || claims[0]?.id || ''
+  ));
   const [currentPage, setCurrentPage] = useState(1);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [focusedFieldId, setFocusedFieldId] = useState('f-1');
@@ -36,11 +38,22 @@ export function ExtractionReviewPage() {
   const [editTempValues, setEditTempValues] = useState({});
   const [isRerunning, setIsRerunning] = useState(false);
 
-  const extractionData = extractions[selectedClaimId] || extractions['CLM-2026-8910'] || {
+  const hasExtractionData = Boolean(extractions[selectedClaimId]);
+  const extractionData = extractions[selectedClaimId] || {
     fields: [],
-    totalPages: 3,
-    overallConfidence: 96,
+    totalPages: 0,
     humanVerified: false,
+  };
+  const hasUnresolvedFields = extractionData.fields.some((field) => (
+    !String(editTempValues[field.id] ?? field.currentValue ?? '').trim()
+  ));
+
+  const handleClaimChange = (claimId) => {
+    setSelectedClaimId(claimId);
+    setCurrentPage(1);
+    setFocusedFieldId('f-1');
+    setEditingFieldId(null);
+    setEditTempValues({});
   };
 
   const handleFieldChange = (fieldId, val) => {
@@ -49,44 +62,57 @@ export function ExtractionReviewPage() {
 
   const handleSaveField = (fieldId) => {
     const val = editTempValues[fieldId];
+    if (val !== undefined && !val.trim()) {
+      toast.warning('Field Required', 'Enter a value or leave the field unchanged before saving.');
+      return;
+    }
     if (val !== undefined) {
       updateExtractionField(selectedClaimId, fieldId, val);
       toast.success('Field Updated', 'Extracted value manually modified and saved.');
     }
     setEditingFieldId(null);
+    setEditTempValues((values) => {
+      const next = { ...values };
+      delete next[fieldId];
+      return next;
+    });
   };
 
   const handleVerifyAll = () => {
+    if (!extractionData || hasUnresolvedFields) {
+      toast.warning('Review Required', 'Resolve blank extracted fields before recording human verification.');
+      return;
+    }
     verifyExtraction(selectedClaimId);
-    toast.success('Extraction Verified', `All OCR fields confirmed by ${currentUser?.name || 'Operator'}. Claim is now ready for clinical adjudication.`);
+    toast.success('Extraction Verified', `Stored demo fields confirmed by ${currentUser?.name || 'Operator'}. Claim is now ready for clinical adjudication.`);
   };
 
   const handleRerun = async () => {
     setIsRerunning(true);
     await rerunExtraction(selectedClaimId);
     setIsRerunning(false);
-    toast.info('Re-extraction Complete', 'Simulated neural OCR re-parsed the document pages.');
+    toast.info('Demo Extraction Refreshed', 'The stored sample was refreshed for another human review.');
   };
 
-  const focusedField = extractionData.fields?.find(f => f.id === focusedFieldId);
+  const focusedField = extractionData.fields.find(f => f.id === focusedFieldId) || extractionData.fields[0];
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="AI Extraction Review & Verification"
+        title="AI Extraction Review (Demo)"
         badge={
           <span className="px-2.5 py-0.5 text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 rounded-full flex items-center gap-1">
             <UserCheck className="w-3.5 h-3.5 text-amber-600" />
             Human-in-the-Loop Required
           </span>
         }
-        description="Verify OCR suggestions against medical documents. Edit extracted values, resolve low confidence fields, and record human verification."
+        description="Review stored demo extraction results, correct fields, and record human verification. No live AI service is connected."
         actions={
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleRerun}
-              disabled={isRerunning}
+              disabled={isRerunning || !hasExtractionData}
               className="px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRerunning ? 'animate-spin' : ''}`} />
@@ -95,9 +121,9 @@ export function ExtractionReviewPage() {
             <button
               type="button"
               onClick={handleVerifyAll}
-              disabled={extractionData.humanVerified}
+              disabled={!hasExtractionData || extractionData.humanVerified || hasUnresolvedFields}
               className={cn(
-                'px-4 py-2 text-xs font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-1.5',
+                'px-4 py-2 text-xs font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed',
                 extractionData.humanVerified
                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default'
                   : 'bg-primary-600 hover:bg-primary-700 text-white'
@@ -118,7 +144,7 @@ export function ExtractionReviewPage() {
             Important Compliance Notice: AI Extraction Results Are Suggestions
           </p>
           <p className="text-amber-800 text-[11px] mt-0.5 leading-relaxed">
-            AI extraction results are suggestions and must be verified by a human operator. The system will never automatically approve claims. Reviewers are legally responsible for verifying clinical codes and billed totals against uploaded hospital records.
+            These demo extraction results are suggestions and must be verified by a human operator. The system will never automatically approve claims. Reviewers are responsible for verifying clinical codes and billed totals against uploaded hospital records.
           </p>
         </div>
       </div>
@@ -129,7 +155,7 @@ export function ExtractionReviewPage() {
           <span className="font-bold text-slate-700">Target Claim:</span>
           <select
             value={selectedClaimId}
-            onChange={(e) => setSelectedClaimId(e.target.value)}
+            onChange={(e) => handleClaimChange(e.target.value)}
             className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-800 font-semibold focus:outline-none"
           >
             {claims.map((c) => (
@@ -143,18 +169,26 @@ export function ExtractionReviewPage() {
         <div className="flex items-center gap-3 text-slate-500">
           <span>Overall OCR Confidence:</span>
           <span className="font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-            {extractionData.overallConfidence}%
+            {hasExtractionData ? `${extractionData.overallConfidence ?? '—'}%` : '—'}
           </span>
-          {extractionData.humanVerified && (
+          {hasExtractionData && extractionData.humanVerified && (
             <span className="text-emerald-700 font-medium flex items-center gap-1">
               <Check className="w-3.5 h-3.5" /> Verified by {extractionData.verifiedBy}
             </span>
+          )}
+          {hasExtractionData && (
+            <StatusBadge
+              status={extractionData.humanVerified ? 'Verified by Human' : 'Needs Human Review'}
+              size="sm"
+              className={!extractionData.humanVerified ? 'bg-amber-50 text-amber-800 border-amber-200' : ''}
+            />
           )}
         </div>
       </div>
 
       {/* Split-Screen Review Canvas */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[640px]">
+      {hasExtractionData && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[640px]">
         {/* LEFT COLUMN: Document Preview Area (7 Cols) */}
         <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200/90 shadow-subtle flex flex-col overflow-hidden">
           {/* Top Document Controls Bar */}
@@ -162,7 +196,7 @@ export function ExtractionReviewPage() {
             <div className="flex items-center gap-2 truncate">
               <FileText className="w-4 h-4 text-primary-600 flex-shrink-0" />
               <span className="font-semibold text-navy truncate" title={extractionData.documentName}>
-                {extractionData.documentName || 'Metropolitan_Memorial_Itemized_Bill_8910.pdf'}
+                {extractionData.documentName || 'Unnamed demo document'}
               </span>
             </div>
 
@@ -359,6 +393,11 @@ export function ExtractionReviewPage() {
                   : field.confidence >= 85
                   ? 'text-blue-700 bg-blue-50 border-blue-200'
                   : 'text-amber-800 bg-amber-50 border-amber-200';
+              const confidenceLabel = field.confidence >= 95
+                ? 'High confidence'
+                : field.confidence >= 85
+                  ? 'Review'
+                  : 'Low confidence';
 
               return (
                 <div
@@ -378,7 +417,7 @@ export function ExtractionReviewPage() {
                     <span className="font-semibold text-slate-700">{field.label}</span>
                     <div className="flex items-center gap-2">
                       <span className={cn('px-2 py-0.5 rounded text-[10px] font-bold border', confColor)}>
-                        {field.confidence}%
+                        {field.confidence}% · {confidenceLabel}
                       </span>
                       {field.edited && (
                         <span className="text-[10px] font-semibold text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded">
@@ -400,7 +439,14 @@ export function ExtractionReviewPage() {
                       <div className="flex justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => setEditingFieldId(null)}
+                          onClick={() => {
+                            setEditingFieldId(null);
+                            setEditTempValues((values) => {
+                              const next = { ...values };
+                              delete next[field.id];
+                              return next;
+                            });
+                          }}
                           className="px-2.5 py-1 text-[11px] text-slate-600 hover:bg-slate-100 rounded"
                         >
                           Cancel
@@ -426,7 +472,9 @@ export function ExtractionReviewPage() {
                           e.stopPropagation();
                           setEditingFieldId(field.id);
                         }}
-                        className="p-1 text-slate-400 hover:text-primary-600 rounded"
+                        disabled={extractionData.humanVerified}
+                        aria-label={`Edit ${field.label}`}
+                        className="p-1 text-slate-400 hover:text-primary-600 disabled:opacity-40 disabled:cursor-not-allowed rounded"
                         title="Edit Value"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
@@ -443,8 +491,25 @@ export function ExtractionReviewPage() {
               );
             })}
           </div>
+          </div>
         </div>
-      </div>
+      )}
+      {!hasExtractionData && (
+        <div className="bg-white p-8 rounded-xl border border-slate-200 text-center">
+          <FileText className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+          <h2 className="text-sm font-bold text-navy">No demo extraction is available for this claim</h2>
+          <p className="text-xs text-slate-500 mt-1">
+            The demo provides stored extraction samples for selected claims. Uploading a document stores it in the repository but does not generate new extraction results.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/documents')}
+            className="mt-4 px-3.5 py-2 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg"
+          >
+            View Document Repository
+          </button>
+        </div>
+      )}
     </div>
   );
 }

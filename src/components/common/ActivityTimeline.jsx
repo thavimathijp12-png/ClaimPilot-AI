@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatRelativeTime } from '../../utils/formatters';
+import { formatDate, formatRelativeTime } from '../../utils/formatters';
 import { FileText, CheckCircle2, AlertTriangle, AlertCircle, Sparkles, Shield, User } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { cn } from '../../utils/cn';
@@ -55,8 +55,11 @@ export function ActivityTimeline({ activities = [], limit, className = '', onCla
             <div className="text-xs">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-semibold text-slate-800">{act.action}</span>
-                <span className="text-[11px] text-slate-400 flex-shrink-0">
-                  {formatRelativeTime(act.timestamp)}
+                <span className="text-[11px] text-slate-400 flex-shrink-0 text-right">
+                  <time dateTime={act.timestamp} title={formatDate(act.timestamp, true)}>
+                    {formatRelativeTime(act.timestamp)}
+                  </time>
+                  <span className="block text-[10px]">{formatDate(act.timestamp, true)}</span>
                 </span>
               </div>
 

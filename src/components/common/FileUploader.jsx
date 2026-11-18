@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { UploadCloud, File, CheckCircle2, AlertCircle, X, RefreshCw } from 'lucide-react';
 import { formatFileSize } from '../../utils/formatters';
 import { validateDocumentUpload } from '../../utils/validators';
@@ -25,6 +25,11 @@ export function FileUploader({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
+  const uploadIntervalRef = useRef(null);
+
+  useEffect(() => () => {
+    if (uploadIntervalRef.current) clearInterval(uploadIntervalRef.current);
+  }, []);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -40,13 +45,36 @@ export function FileUploader({
     setError('');
     if (!file) return;
 
-    // Validate using Zod schema
+    const extension = `.${file.name.split('.').pop().toLowerCase()}`;
+    const acceptedExtensions = acceptedTypes.filter((type) => type.startsWith('.')).map((type) => type.toLowerCase());
+    const acceptedMimeTypes = acceptedTypes.filter((type) => !type.startsWith('.')).map((type) => type.toLowerCase());
+    const mimeTypesByExtension = {
+      '.pdf': 'application/pdf',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+    };
+
+    if (
+      (acceptedExtensions.length && !acceptedExtensions.includes(extension)) ||
+      (file.type && mimeTypesByExtension[extension] && file.type !== mimeTypesByExtension[extension]) ||
+      (acceptedMimeTypes.length && file.type && !acceptedMimeTypes.includes(file.type.toLowerCase()))
+    ) {
+      setError(`Choose a supported file type: ${acceptedTypes.join(', ')}.`);
+      return;
+    }
+
+    if (file.size > maxSizeBytes) {
+      setError(`File exceeds maximum limit of ${formatFileSize(maxSizeBytes)}.`);
+      return;
+    }
+
     const validation = validateDocumentUpload({
       name: file.name,
       sizeBytes: file.size,
-      category: category,
-      claimId: claimId || 'CLM-2026-8910',
-    });
+      category,
+      claimId,
+    }, maxSizeBytes);
 
     if (!validation.success) {
       setError(validation.error);
@@ -70,38 +98,38 @@ export function FileUploader({
     if (e.target.files && e.target.files[0]) {
       validateAndSetFile(e.target.files[0]);
     }
+    e.target.value = '';
   };
 
   const startSimulatedUpload = (file) => {
     setUploading(true);
     setProgress(10);
+    let nextProgress = 10;
 
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 95) {
-          clearInterval(interval);
-          setTimeout(() => {
-            setUploading(false);
-            setProgress(100);
-            if (onUploadComplete) {
-              onUploadComplete({
-                name: file.name,
-                sizeBytes: file.size,
-                fileType: file.name.endsWith('.pdf') ? 'PDF' : file.name.endsWith('.png') ? 'PNG' : 'JPG',
-                category: category,
-                claimId: claimId || 'CLM-2026-8910',
-                previewUrl: URL.createObjectURL(file),
-              });
-            }
-          }, 300);
-          return 95;
-        }
-        return prev + 20;
-      });
+    uploadIntervalRef.current = setInterval(() => {
+      nextProgress = Math.min(nextProgress + 20, 100);
+      setProgress(nextProgress);
+      if (nextProgress === 100) {
+        clearInterval(uploadIntervalRef.current);
+        uploadIntervalRef.current = null;
+        setUploading(false);
+        const extension = file.name.split('.').pop().toLowerCase();
+        const fileType = extension === 'pdf' ? 'PDF' : extension.toUpperCase();
+        onUploadComplete?.({
+          name: file.name,
+          sizeBytes: file.size,
+          fileType,
+          category,
+          claimId,
+          previewUrl: URL.createObjectURL(file),
+        });
+      }
     }, 150);
   };
 
   const handleReset = () => {
+    if (uploadIntervalRef.current) clearInterval(uploadIntervalRef.current);
+    uploadIntervalRef.current = null;
     setSelectedFile(null);
     setProgress(0);
     setUploading(false);
@@ -131,11 +159,20 @@ export function FileUploader({
 
       {!selectedFile ? (
         <div
+          role="button"
+          tabIndex={0}
+          aria-label="Select a document to upload"
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              fileInputRef.current?.click();
+            }
+          }}
           className={cn(
             'border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all flex flex-col items-center justify-center',
             dragActive
@@ -148,6 +185,8 @@ export function FileUploader({
             type="file"
             accept={acceptedTypes.join(',')}
             onChange={handleFileChange}
+            onClick={(e) => e.stopPropagation()}
+            disabled={uploading}
             className="hidden"
           />
           <div className="w-12 h-12 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center mb-3">
@@ -223,7 +262,7 @@ export function FileUploader({
       )}
 
       {error && (
-        <div className="mt-3 p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+        <div role="alert" className="mt-3 p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           <span>{error}</span>
         </div>

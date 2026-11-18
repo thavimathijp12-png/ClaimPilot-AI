@@ -13,11 +13,8 @@ import {
   ShieldCheck,
   Sparkles,
   UploadCloud,
-  FileBarChart,
   Calendar,
-  Filter,
   RefreshCw,
-  Activity,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -27,20 +24,27 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend
+  Legend,
 } from 'recharts';
 import { StatCard } from '../components/common/StatCard';
 import { ChartCard } from '../components/common/ChartCard';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { ActivityTimeline } from '../components/common/ActivityTimeline';
 import { formatCurrency, formatDate } from '../utils/formatters';
-import {
-  MONTHLY_TREND_DATA,
-  STATUS_DISTRIBUTION_DATA,
-} from '../data/mockAnalytics';
+
+function getWindowStart(range, today) {
+  const start = new Date(today);
+  start.setHours(0, 0, 0, 0);
+
+  if (range === '7d') start.setDate(start.getDate() - 6);
+  if (range === '30d') start.setDate(start.getDate() - 29);
+  if (range === 'qtd') {
+    start.setMonth(Math.floor(start.getMonth() / 3) * 3, 1);
+  }
+  if (range === 'ytd') start.setMonth(0, 1);
+
+  return start;
+}
 
 export function DashboardPage() {
   const { currentUser } = useAuth();
@@ -66,13 +70,11 @@ export function DashboardPage() {
   const filteredClaims = useMemo(() => {
     if (dateRange === 'all') return claims;
     const now = new Date();
-    const daysMap = { '7d': 7, '30d': 30, 'qtd': 90, 'ytd': 365 };
-    const maxDays = daysMap[dateRange] || 30;
-    const cutoff = new Date(now.getTime() - maxDays * 24 * 60 * 60 * 1000);
+    const cutoff = getWindowStart(dateRange, now);
     return claims.filter((c) => {
-      if (!c.submissionDate) return true;
-      const sub = new Date(c.submissionDate);
-      return isNaN(sub.getTime()) || sub >= cutoff;
+      if (!c.submissionDate) return false;
+      const submittedAt = new Date(`${c.submissionDate.slice(0, 10)}T00:00:00`);
+      return !Number.isNaN(submittedAt.getTime()) && submittedAt >= cutoff;
     });
   }, [claims, dateRange]);
 
@@ -82,13 +84,50 @@ export function DashboardPage() {
   const rejectedCount = filteredClaims.filter(c => c.status === 'Rejected').length;
   const totalVolume = filteredClaims.reduce((acc, curr) => acc + (curr.claimAmount || 0), 0);
 
-  // Dynamic trend data scaled to selected window
   const trendData = useMemo(() => {
-    if (dateRange === '7d') return MONTHLY_TREND_DATA.slice(-2);
-    if (dateRange === '30d') return MONTHLY_TREND_DATA.slice(-4);
-    if (dateRange === 'qtd') return MONTHLY_TREND_DATA.slice(-6);
-    return MONTHLY_TREND_DATA;
-  }, [dateRange]);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = dateRange === 'all'
+      ? claims.reduce((earliest, claim) => {
+        const date = claim.submissionDate ? new Date(`${claim.submissionDate.slice(0, 10)}T00:00:00`) : null;
+        return date && !Number.isNaN(date.getTime()) && date < earliest ? date : earliest;
+      }, new Date(today.getFullYear(), today.getMonth(), 1))
+      : getWindowStart(dateRange, today);
+    const bucketUnit = dateRange === '7d' ? 'day' : dateRange === '30d' ? 'week' : 'month';
+    const bucketCount = bucketUnit === 'day'
+      ? 7
+      : bucketUnit === 'week'
+        ? Math.ceil((today - start + 86400000) / (7 * 86400000))
+        : (today.getFullYear() - start.getFullYear()) * 12 + today.getMonth() - start.getMonth() + 1;
+    const buckets = Array.from({ length: Math.max(bucketCount, 1) }, (_, index) => {
+      const bucketStart = new Date(start);
+      if (bucketUnit === 'day') bucketStart.setDate(start.getDate() + index);
+      if (bucketUnit === 'week') bucketStart.setDate(start.getDate() + index * 7);
+      if (bucketUnit === 'month') bucketStart.setMonth(start.getMonth() + index, 1);
+      const label = bucketUnit === 'day'
+        ? bucketStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        : bucketUnit === 'week'
+          ? `Week ${index + 1}`
+          : bucketStart.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+      return { label, totalClaims: 0, approved: 0 };
+    });
+
+    filteredClaims.forEach((claim) => {
+      if (!claim.submissionDate) return;
+      const submittedAt = new Date(`${claim.submissionDate.slice(0, 10)}T00:00:00`);
+      if (Number.isNaN(submittedAt.getTime()) || submittedAt < start || submittedAt > today) return;
+      const index = bucketUnit === 'day'
+        ? Math.floor((submittedAt - start) / 86400000)
+        : bucketUnit === 'week'
+          ? Math.floor((submittedAt - start) / (7 * 86400000))
+          : (submittedAt.getFullYear() - start.getFullYear()) * 12 + submittedAt.getMonth() - start.getMonth();
+      if (!buckets[index]) return;
+      buckets[index].totalClaims += 1;
+      if (claim.status === 'Approved') buckets[index].approved += 1;
+    });
+
+    return buckets;
+  }, [claims, dateRange, filteredClaims]);
 
   // Filtered recent claims queue
   const filteredRecentClaims = useMemo(() => {
@@ -109,8 +148,6 @@ export function DashboardPage() {
     flagged: claims.filter(c => (c.dataQualityScore < 85) || c.status === 'Correction Requested').length,
     approved: claims.filter(c => c.status === 'Approved').length,
   }), [claims]);
-
-  const pendingApprovals = claims.filter(c => c.status === 'Pending Review').slice(0, 3);
 
   const currentDateFormatted = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -167,7 +204,7 @@ export function DashboardPage() {
             <span className="text-slate-500 font-normal">
               {dateRange === '7d' && 'Last 7 Days'}
               {dateRange === '30d' && 'Last 30 Days (Cycle)'}
-              {dateRange === 'qtd' && 'Current Quarter (Q4)'}
+              {dateRange === 'qtd' && 'Current Quarter'}
               {dateRange === 'ytd' && 'Year to Date'}
               {dateRange === 'all' && 'All Records'}
             </span>
@@ -195,7 +232,7 @@ export function DashboardPage() {
           </div>
         </div>
 
-        <div className="inline-flex items-center p-1 bg-slate-100 rounded-lg border border-slate-200/80 text-xs">
+        <div className="inline-flex w-full max-w-full sm:w-auto items-center overflow-x-auto p-1 bg-slate-100 rounded-lg border border-slate-200/80 text-xs">
           {[
             { id: '7d', label: '7 Days' },
             { id: '30d', label: '30 Days' },
@@ -207,7 +244,7 @@ export function DashboardPage() {
               key={r.id}
               type="button"
               onClick={() => setDateRange(r.id)}
-              className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+              className={`shrink-0 whitespace-nowrap px-2.5 py-1 rounded-md font-semibold transition-all ${
                 dateRange === r.id
                   ? 'bg-white text-primary-700 shadow-2xs'
                   : 'text-slate-600 hover:text-navy hover:bg-slate-200/60'
@@ -224,9 +261,8 @@ export function DashboardPage() {
         <StatCard
           title="Total Claims Intake"
           value={totalClaimsCount}
-          subtitle={`Total value: ${formatCurrency(totalVolume)}`}
+          subtitle={`Billed value: ${formatCurrency(totalVolume)}`}
           icon={FileText}
-          trend={12.4}
           variant="default"
           onClick={() => navigate('/claims')}
         />
@@ -235,7 +271,6 @@ export function DashboardPage() {
           value={pendingCount}
           subtitle="Awaiting reviewer adjudication"
           icon={Clock}
-          trend={-3.1}
           variant="amber"
           onClick={() => navigate('/approvals')}
         />
@@ -244,7 +279,6 @@ export function DashboardPage() {
           value={approvedCount}
           subtitle="Processed for disbursement"
           icon={CheckCircle2}
-          trend={8.5}
           variant="teal"
           onClick={() => navigate('/claims?status=Approved')}
         />
@@ -253,7 +287,6 @@ export function DashboardPage() {
           value={rejectedCount}
           subtitle="Compliance or coverage non-match"
           icon={XCircle}
-          trend={-1.8}
           variant="rose"
           onClick={() => navigate('/claims?status=Rejected')}
         />
@@ -262,10 +295,10 @@ export function DashboardPage() {
       {/* Analytics Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Trend Area Chart */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 min-w-0">
           <ChartCard
-            title="Monthly Claims Processing Trend"
-            subtitle="Volume and approval trajectory over the last 6 months (synthetic demo data)"
+            title={dateRange === '7d' ? 'Daily Claims Processing Trend' : dateRange === '30d' ? 'Weekly Claims Processing Trend' : 'Monthly Claims Processing Trend'}
+            subtitle="Submitted claims and approvals in the selected operational window."
             action={
               <button
                 type="button"
@@ -290,8 +323,8 @@ export function DashboardPage() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748B' }} stroke="#CBD5E1" />
-                <YAxis tick={{ fontSize: 11, fill: '#64748B' }} stroke="#CBD5E1" />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#64748B' }} stroke="#CBD5E1" minTickGap={12} />
+                <YAxis tick={{ fontSize: 11, fill: '#64748B' }} stroke="#CBD5E1" allowDecimals={false} />
                 <Tooltip
                   formatter={(val) => [Number(val).toLocaleString(), 'Claims']}
                   contentStyle={{
@@ -306,13 +339,14 @@ export function DashboardPage() {
                 />
                 <Area type="monotone" dataKey="totalClaims" name="Total Ingested" stroke="#2563EB" strokeWidth={2} fillOpacity={1} fill="url(#colorTotal)" />
                 <Area type="monotone" dataKey="approved" name="Approved" stroke="#0D9488" strokeWidth={2} fillOpacity={1} fill="url(#colorApproved)" />
+                <Legend verticalAlign="bottom" height={28} />
               </AreaChart>
             </ResponsiveContainer>
           </ChartCard>
         </div>
 
         {/* Data Quality / Status Distribution */}
-        <div>
+        <div className="min-w-0">
           <ChartCard
             title="DataGuard IQ Health Index"
             subtitle="Real-time automated data validation score"
@@ -414,7 +448,7 @@ export function DashboardPage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full min-w-[700px] text-left text-xs">
               <thead className="bg-slate-50/70 border-b border-slate-100 text-slate-500 uppercase tracking-wider font-semibold">
                 <tr>
                   <th className="px-4 py-2.5">Claim ID</th>

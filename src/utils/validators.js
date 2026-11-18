@@ -18,16 +18,26 @@ export const claimStatusEnum = z.enum([
 
 export const claimPriorityEnum = z.enum(['High', 'Medium', 'Low']);
 
+const isValidDateOnly = (value) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+};
+
+const dateOnly = (message) => z.string().refine(isValidDateOnly, { message });
+const optionalDateOnly = z.preprocess(
+  (value) => value === '' ? undefined : value,
+  dateOnly('Invalid date of birth. Use YYYY-MM-DD.').optional()
+);
+
 export const claimSchema = z.object({
   claimantName: z
     .string()
     .trim()
     .min(2, { message: 'Patient name must be at least 2 characters.' })
     .max(80, { message: 'Patient name cannot exceed 80 characters.' }),
-  claimantDob: z
-    .string()
-    .refine((val) => !isNaN(Date.parse(val)), { message: 'Invalid date of birth format.' })
-    .optional(),
+  claimantDob: optionalDateOnly,
   claimantGender: z.string().optional(),
   policyNumber: z
     .string()
@@ -46,31 +56,41 @@ export const claimSchema = z.object({
     .trim()
     .regex(/^\d{10}$/, { message: 'National Provider Identifier (NPI) must be exactly 10 digits.' }),
   claimType: claimTypeEnum,
-  claimAmount: z
-    .union([z.string(), z.number()])
-    .transform((val) => (typeof val === 'string' ? parseFloat(val) : val))
-    .refine((n) => !isNaN(n) && n > 0, { message: 'Claim amount must be a positive number greater than ₹0.00.' }),
-  copayAmount: z
-    .union([z.string(), z.number()])
-    .transform((val) => (typeof val === 'string' ? parseFloat(val) : val))
-    .refine((n) => !isNaN(n) && n >= 0, { message: 'Copay amount cannot be negative.' })
-    .optional(),
-  submissionDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: 'Invalid submission date.' }),
-  admissionDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: 'Invalid admission date.' }),
-  dischargeDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: 'Invalid discharge date.' }),
+  claimAmount: z.preprocess(
+    (value) => typeof value === 'string' && value.trim() === '' ? Number.NaN : Number(value),
+    z.number({ invalid_type_error: 'Claim amount must be a valid number.' })
+      .finite({ message: 'Claim amount must be a finite number.' })
+      .positive({ message: 'Claim amount must be greater than ₹0.00.' })
+  ),
+  copayAmount: z.preprocess(
+    (value) => value === '' || value === undefined ? undefined : Number(value),
+    z.number({ invalid_type_error: 'Copay must be a valid number.' })
+      .finite({ message: 'Copay must be a finite number.' })
+      .nonnegative({ message: 'Copay amount cannot be negative.' })
+      .optional()
+  ),
+  submissionDate: dateOnly('Invalid submission date. Use YYYY-MM-DD.'),
+  admissionDate: dateOnly('Invalid admission date. Use YYYY-MM-DD.'),
+  dischargeDate: dateOnly('Invalid discharge date. Use YYYY-MM-DD.'),
   status: claimStatusEnum,
   priority: claimPriorityEnum,
   description: z.string().max(500, { message: 'Description cannot exceed 500 characters.' }).optional(),
 }).refine(
   (data) => {
-    if (data.admissionDate && data.dischargeDate) {
-      return new Date(data.dischargeDate) >= new Date(data.admissionDate);
-    }
-    return true;
+    return data.dischargeDate >= data.admissionDate;
   },
   {
     message: 'Discharge date must occur on or after admission date.',
     path: ['dischargeDate'],
+  }
+).refine(
+  (data) => !data.claimantDob || (
+    data.claimantDob <= data.admissionDate &&
+    data.claimantDob <= new Date().toISOString().slice(0, 10)
+  ),
+  {
+    message: 'Date of birth must be on or before the encounter date and cannot be in the future.',
+    path: ['claimantDob'],
   }
 );
 
@@ -128,8 +148,15 @@ export const documentUploadSchema = z.object({
  * @param {Object} docData
  * @returns {{ success: boolean, data?: Object, error?: string }}
  */
-export function validateDocumentUpload(docData) {
-  const result = documentUploadSchema.safeParse(docData);
+export function validateDocumentUpload(docData, maxSizeBytes = 15 * 1024 * 1024) {
+  const uploadSchema = maxSizeBytes === 15 * 1024 * 1024
+    ? documentUploadSchema
+    : documentUploadSchema.extend({
+      sizeBytes: z.number()
+        .positive({ message: 'File size must be greater than 0 bytes.' })
+        .max(maxSizeBytes, { message: `File exceeds maximum limit of ${maxSizeBytes} bytes.` }),
+    });
+  const result = uploadSchema.safeParse(docData);
   if (!result.success) {
     return {
       success: false,
