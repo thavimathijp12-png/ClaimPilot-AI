@@ -28,7 +28,30 @@ import { Modal } from '../components/common/Modal';
 import { FormField } from '../components/common/FormField';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { exportToCSV } from '../services/exportService';
+import { storage } from '../services/storageService';
 import { validateClaimForm } from '../utils/validators';
+
+const isValidDensity = (value) => ['compact', 'comfortable', 'spacious'].includes(value);
+
+function getSavedDensity() {
+  const savedDensity = storage.get('table_density', null, isValidDensity);
+  if (savedDensity) return savedDensity;
+
+  try {
+    const legacyDensity = window.localStorage.getItem('claimpilot_table_density');
+    if (isValidDensity(legacyDensity)) {
+      storage.set('table_density', legacyDensity);
+      return legacyDensity;
+    }
+    if (legacyDensity) {
+      console.warn('Invalid saved claim table density; using the comfortable layout.');
+      window.localStorage.removeItem('claimpilot_table_density');
+    }
+  } catch (error) {
+    console.warn('Unable to read saved claim table density:', error);
+  }
+  return 'comfortable';
+}
 
 export function ClaimsPage() {
   const { claims, createClaim, updateClaim } = useClaims();
@@ -44,13 +67,12 @@ export function ClaimsPage() {
   const [sortDirection, setSortDirection] = useState('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
-  const [density, setDensity] = useState(
-    () => localStorage.getItem('claimpilot_table_density') || 'comfortable'
-  );
+  const [density, setDensity] = useState(getSavedDensity);
 
   const handleDensityChange = (newDensity) => {
+    if (!isValidDensity(newDensity)) return;
     setDensity(newDensity);
-    localStorage.setItem('claimpilot_table_density', newDensity);
+    storage.set('table_density', newDensity);
   };
 
   // Modal State: Create / Edit

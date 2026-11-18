@@ -1,20 +1,47 @@
 export const storage = {
-  get(key, defaultValue = null) {
+  get(key, defaultValue = null, validate) {
+    const storageKey = `cp_${key}`;
     try {
-      const item = localStorage.getItem(`cp_${key}`);
-      return item ? JSON.parse(item) : defaultValue;
-    } catch (e) {
-      console.warn(`Error reading from localStorage key "${key}":`, e);
+      const item = localStorage.getItem(storageKey);
+      if (item === null) return defaultValue;
+
+      let value;
+      try {
+        value = JSON.parse(item);
+      } catch (error) {
+        console.warn(`Invalid JSON in localStorage key "${key}":`, error);
+        storage.remove(key);
+        return defaultValue;
+      }
+
+      const expectedType = Array.isArray(defaultValue)
+        ? Array.isArray(value)
+        : defaultValue && typeof defaultValue === 'object'
+          ? value !== null && typeof value === 'object' && !Array.isArray(value)
+          : defaultValue !== null && defaultValue !== undefined
+            ? typeof value === typeof defaultValue
+            : true;
+
+      if (!expectedType || (validate && !validate(value))) {
+        console.warn(`Invalid stored data for localStorage key "${key}". Restoring default data.`);
+        storage.remove(key);
+        return defaultValue;
+      }
+      return value;
+    } catch (error) {
+      console.warn(`Error reading from localStorage key "${key}":`, error);
       return defaultValue;
     }
   },
 
   set(key, value) {
     try {
-      localStorage.setItem(`cp_${key}`, JSON.stringify(value));
+      const serialized = JSON.stringify(value);
+      if (serialized === undefined) throw new TypeError('Storage value cannot be serialized.');
+      localStorage.setItem(`cp_${key}`, serialized);
       return true;
-    } catch (e) {
-      console.warn(`Error writing to localStorage key "${key}":`, e);
+    } catch (error) {
+      console.warn(`Error writing to localStorage key "${key}":`, error);
       return false;
     }
   },
@@ -22,8 +49,8 @@ export const storage = {
   remove(key) {
     try {
       localStorage.removeItem(`cp_${key}`);
-    } catch (e) {
-      console.warn(`Error removing localStorage key "${key}":`, e);
+    } catch (error) {
+      console.warn(`Error removing localStorage key "${key}":`, error);
     }
   },
 
@@ -32,8 +59,8 @@ export const storage = {
       Object.keys(localStorage)
         .filter(k => k.startsWith('cp_'))
         .forEach(k => localStorage.removeItem(k));
-    } catch (e) {
-      console.warn('Error clearing ClaimPilot storage:', e);
+    } catch (error) {
+      console.warn('Error clearing ClaimPilot storage:', error);
     }
   }
 };

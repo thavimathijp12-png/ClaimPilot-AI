@@ -8,11 +8,61 @@ import { Modal } from '../components/common/Modal';
 import { cn } from '../utils/cn';
 import { formatRelativeTime } from '../utils/formatters';
 
+function readPreference(key) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch (error) {
+    console.warn(`Unable to read browser preference "${key}":`, error);
+    return null;
+  }
+}
+
+function writePreference(key, value) {
+  try {
+    window.localStorage.setItem(key, value);
+    return true;
+  } catch (error) {
+    console.warn(`Unable to save browser preference "${key}":`, error);
+    return false;
+  }
+}
+
+function removePreference(key) {
+  try {
+    window.localStorage.removeItem(key);
+    return true;
+  } catch (error) {
+    console.warn(`Unable to remove browser preference "${key}":`, error);
+    return false;
+  }
+}
+
+function readLastSession() {
+  const savedSession = readPreference('claimpilot_last_session');
+  if (!savedSession) return null;
+  try {
+    const session = JSON.parse(savedSession);
+    if (
+      session &&
+      typeof session.name === 'string' &&
+      typeof session.email === 'string' &&
+      typeof session.role === 'string' &&
+      typeof session.timestamp === 'string'
+    ) {
+      return session;
+    }
+  } catch (error) {
+    console.warn('Invalid saved login session; clearing it.', error);
+  }
+  removePreference('claimpilot_last_session');
+  return null;
+}
+
 export function LoginPage() {
-  const [email, setEmail] = useState(() => localStorage.getItem('claimpilot_remembered_email') || '');
+  const [email, setEmail] = useState(() => readPreference('claimpilot_remembered_email') || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(() => Boolean(localStorage.getItem('claimpilot_remembered_email')));
+  const [rememberMe, setRememberMe] = useState(() => Boolean(readPreference('claimpilot_remembered_email')));
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
@@ -20,13 +70,7 @@ export function LoginPage() {
   const [showMatrixModal, setShowMatrixModal] = useState(false);
 
   // Last Active Session State
-  const [lastSession, setLastSession] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('claimpilot_last_session') || 'null');
-    } catch {
-      return null;
-    }
-  });
+  const [lastSession, setLastSession] = useState(readLastSession);
 
   const { login, demoAccounts } = useAuth();
   const toast = useToast();
@@ -34,12 +78,16 @@ export function LoginPage() {
 
   const handleClearSavedSession = (e) => {
     e.stopPropagation();
-    localStorage.removeItem('claimpilot_last_session');
-    localStorage.removeItem('claimpilot_remembered_email');
+    const sessionRemoved = removePreference('claimpilot_last_session');
+    const emailRemoved = removePreference('claimpilot_remembered_email');
     setLastSession(null);
     setEmail('');
     setRememberMe(false);
-    toast.info('Session Cleared', 'Remembered credentials removed from this browser.');
+    if (sessionRemoved && emailRemoved) {
+      toast.info('Session Cleared', 'Remembered credentials removed from this browser.');
+    } else {
+      toast.warning('Session Not Fully Cleared', 'Browser storage could not be updated. Clear saved site data in your browser settings.');
+    }
   };
 
   const handleResumeLastSession = async () => {
@@ -61,8 +109,8 @@ export function LoginPage() {
     try {
       const user = await login(email, password, rememberMe);
       if (rememberMe) {
-        localStorage.setItem('claimpilot_remembered_email', user.email);
-        localStorage.setItem(
+        const emailSaved = writePreference('claimpilot_remembered_email', user.email);
+        const sessionSaved = writePreference(
           'claimpilot_last_session',
           JSON.stringify({
             name: user.name,
@@ -72,9 +120,15 @@ export function LoginPage() {
             timestamp: new Date().toISOString(),
           })
         );
+        if (!emailSaved || !sessionSaved) {
+          toast.warning('Session Not Remembered', 'Sign-in succeeded, but browser storage is unavailable for saved session details.');
+        }
       } else {
-        localStorage.removeItem('claimpilot_remembered_email');
-        localStorage.removeItem('claimpilot_last_session');
+        const emailRemoved = removePreference('claimpilot_remembered_email');
+        const sessionRemoved = removePreference('claimpilot_last_session');
+        if (!emailRemoved || !sessionRemoved) {
+          toast.warning('Saved Session Remains', 'Browser storage could not remove remembered session details.');
+        }
       }
       toast.success('Welcome back!', `Signed in as ${user.name} (${user.role}).`);
       navigate('/dashboard');

@@ -11,15 +11,30 @@ const ClaimContext = createContext(null);
 const PENDING_ADJUDICATION_STATUSES = ['Pending Review', 'Under AI Audit'];
 
 const canAdjudicate = (claim) => claim && PENDING_ADJUDICATION_STATUSES.includes(claim.status);
+const isRecord = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+const hasStringFields = (value, fields) => isRecord(value) && fields.every((field) => typeof value[field] === 'string');
+const isStoredClaims = (value) => Array.isArray(value) && value.every((claim) => (
+  hasStringFields(claim, ['id', 'claimantName', 'policyNumber', 'hospitalName', 'claimType', 'status']) &&
+  Number.isFinite(Number(claim.claimAmount))
+));
+const isStoredDocuments = (value) => Array.isArray(value) && value.every((doc) => (
+  hasStringFields(doc, ['id', 'claimId', 'name', 'category', 'status'])
+));
+const isStoredActivities = (value) => Array.isArray(value) && value.every((activity) => (
+  hasStringFields(activity, ['id', 'timestamp', 'action', 'description', 'userName', 'category'])
+));
+const isStoredExtractions = (value) => isRecord(value) && Object.values(value).every((extraction) => (
+  isRecord(extraction) && Array.isArray(extraction.fields)
+));
 
 export function ClaimProvider({ children }) {
   const { currentUser } = useAuth();
 
-  const [claims, setClaims] = useState(() => storage.get('claims', INITIAL_CLAIMS));
-  const [documents, setDocuments] = useState(() => storage.get('documents', INITIAL_DOCUMENTS));
-  const [activities, setActivities] = useState(() => storage.get('activities', INITIAL_ACTIVITIES));
-  const [validations, setValidations] = useState(() => storage.get('validations', CLAIM_VALIDATION_RULES));
-  const [extractions, setExtractions] = useState(() => storage.get('extractions', MOCK_EXTRACTION_SETS));
+  const [claims, setClaims] = useState(() => storage.get('claims', INITIAL_CLAIMS, isStoredClaims));
+  const [documents, setDocuments] = useState(() => storage.get('documents', INITIAL_DOCUMENTS, isStoredDocuments));
+  const [activities, setActivities] = useState(() => storage.get('activities', INITIAL_ACTIVITIES, isStoredActivities));
+  const [validations, setValidations] = useState(() => storage.get('validations', CLAIM_VALIDATION_RULES, isRecord));
+  const [extractions, setExtractions] = useState(() => storage.get('extractions', MOCK_EXTRACTION_SETS, isStoredExtractions));
   const [dataGuardSummary, setDataGuardSummary] = useState(() => storage.get('dataguard_summary', DATAGUARD_SYSTEM_OVERVIEW));
 
   // Sync to storage
