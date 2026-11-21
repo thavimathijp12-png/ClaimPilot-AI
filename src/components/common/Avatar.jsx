@@ -52,13 +52,13 @@ export function Avatar({
   // Blue / Teal medical gradient styling with subtle border
   const getGradientStyle = () => {
     const norm = (role || name || '').toLowerCase();
-    if (norm.includes('reviewer') || norm.includes('jenkins') || displayInitials === 'SJ') {
+    if (norm.includes('reviewer') || norm.includes('kirubha') || displayInitials === 'KS') {
       return 'bg-gradient-to-tr from-primary-600 via-primary-700 to-teal-500 border-teal-200/50 shadow-xs';
     }
-    if (norm.includes('operator') || norm.includes('chen') || displayInitials === 'MC') {
+    if (norm.includes('operator') || norm.includes('varshini') || displayInitials === 'VA') {
       return 'bg-gradient-to-tr from-teal-600 to-primary-600 border-teal-200/50 shadow-xs';
     }
-    if (norm.includes('admin') || norm.includes('vance') || displayInitials === 'EV') {
+    if (norm.includes('admin') || norm.includes('thavimathi') || displayInitials === 'DT') {
       return 'bg-gradient-to-tr from-navy via-deepNavy to-primary-700 border-primary-200/40 shadow-xs';
     }
     return 'bg-gradient-to-tr from-primary-600 to-teal-500 border-primary-200/40 shadow-xs';
