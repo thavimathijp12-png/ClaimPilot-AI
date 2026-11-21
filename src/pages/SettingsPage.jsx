@@ -21,7 +21,7 @@ import { Avatar } from '../components/common/Avatar';
 import Tabs from '../components/common/Tabs';
 
 export function SettingsPage() {
-  const { currentUser, switchRole, demoAccounts } = useAuth();
+  const { currentUser } = useAuth();
   const { resetToDefaults } = useClaims();
   const toast = useToast();
 

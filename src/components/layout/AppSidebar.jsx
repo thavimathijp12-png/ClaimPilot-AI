@@ -13,61 +13,133 @@ import {
   HelpCircle,
   X,
   Activity,
+  Shield,
+  Stethoscope,
+  FolderOpen,
 } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
 import { useClaims } from '../../context/ClaimContext';
 import { cn } from '../../utils/cn';
 
 export function AppSidebar({ isOpen, onClose }) {
-  const { claims, dataGuardSummary } = useClaims();
+  const { currentUser } = useAuth();
+  const { claims = [], dataGuardSummary } = useClaims();
+  const safeClaims = claims || [];
 
-  const pendingApprovalsCount = claims.filter(
+  const pendingApprovalsCount = safeClaims.filter(
     (claim) => claim.status === 'Pending Review' || claim.status === 'Under AI Audit'
   ).length;
 
-  const navGroups = [
-    {
-      title: 'MAIN',
-      items: [
-        { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-        { name: 'Claims', path: '/claims', icon: FileText, badge: claims.length },
-        { name: 'Documents', path: '/documents', icon: Files },
+  const dataGuardScore = dataGuardSummary?.overallScore ?? 94;
+  const roleCode = (currentUser?.roleCode || '').toLowerCase();
+
+  // Dynamically configure navigation based on the user's role
+  const getNavGroups = () => {
+    if (roleCode === 'operator') {
+      return [
         {
-          name: 'DataGuard IQ',
-          path: '/dataguard',
-          icon: ShieldCheck,
-          badge: `${dataGuardSummary.overallScore}%`,
-          badgeColor: 'bg-teal-500/10 text-teal-300 border-teal-500/20'
+          title: 'OPERATIONS',
+          items: [
+            { name: 'Operator Dashboard', path: '/operator/dashboard', icon: LayoutDashboard },
+            { name: 'Claims Intake', path: '/claims', icon: FileText, badge: safeClaims.length },
+            { name: 'Document Center', path: '/documents', icon: Files },
+            { name: 'AI OCR Extraction', path: '/extraction', icon: Sparkles },
+          ],
         },
-        { name: 'AI Extraction Review', path: '/extraction', icon: Sparkles },
-      ],
-    },
-    {
-      title: 'WORKFLOW',
-      items: [
         {
-          name: 'Approvals',
-          path: '/approvals',
-          icon: CheckSquare,
-          badge: pendingApprovalsCount,
-          badgeColor: 'bg-primary-500 text-white'
+          title: 'TRACKING',
+          items: [
+            { name: 'Intake Activity', path: '/activity', icon: Clock },
+            { name: 'Help & Support', path: '/help', icon: HelpCircle },
+          ],
         },
-        { name: 'Activity History', path: '/activity', icon: Clock },
-      ],
-    },
-    {
-      title: 'INSIGHTS',
-      items: [
-        { name: 'Reports & Analytics', path: '/reports', icon: BarChart3 },
-      ],
-    },
-    {
-      title: 'SYSTEM',
-      items: [
-        { name: 'Settings', path: '/settings', icon: Settings },
-        { name: 'Help & Support', path: '/help', icon: HelpCircle },
-      ],
-    },
-  ];
+      ];
+    }
+
+    if (roleCode === 'reviewer') {
+      return [
+        {
+          title: 'CLINICAL REVIEW',
+          items: [
+            { name: 'Reviewer Dashboard', path: '/reviewer/dashboard', icon: LayoutDashboard },
+            { name: 'Claims Worklist', path: '/claims', icon: FileText, badge: safeClaims.length },
+            { name: 'Medical Documents', path: '/documents', icon: Files },
+            {
+              name: 'DataGuard IQ',
+              path: '/dataguard',
+              icon: ShieldCheck,
+              badge: `${dataGuardScore}%`,
+              badgeColor: 'bg-teal-500/10 text-teal-300 border-teal-500/20',
+            },
+          ],
+        },
+        {
+          title: 'ADJUDICATION',
+          items: [
+            {
+              name: 'Approvals Queue',
+              path: '/approvals',
+              icon: CheckSquare,
+              badge: pendingApprovalsCount,
+              badgeColor: 'bg-primary-500 text-white',
+            },
+            { name: 'Activity Audit', path: '/activity', icon: Clock },
+            { name: 'Analytics & Reports', path: '/reports', icon: BarChart3 },
+          ],
+        },
+        {
+          title: 'SUPPORT',
+          items: [
+            { name: 'Clinical Guidelines', path: '/help', icon: HelpCircle },
+          ],
+        },
+      ];
+    }
+
+    // Default / Admin navigation
+    return [
+      {
+        title: 'GOVERNANCE',
+        items: [
+          { name: 'Admin Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
+          { name: 'Claims Registry', path: '/claims', icon: FileText, badge: safeClaims.length },
+          { name: 'Document Vault', path: '/documents', icon: Files },
+          {
+            name: 'DataGuard IQ Engine',
+            path: '/dataguard',
+            icon: ShieldCheck,
+            badge: `${dataGuardScore}%`,
+            badgeColor: 'bg-teal-500/10 text-teal-300 border-teal-500/20',
+          },
+          { name: 'AI OCR Pipeline', path: '/extraction', icon: Sparkles },
+        ],
+      },
+      {
+        title: 'WORKFLOW',
+        items: [
+          {
+            name: 'Clinical Approvals',
+            path: '/approvals',
+            icon: CheckSquare,
+            badge: pendingApprovalsCount,
+            badgeColor: 'bg-primary-500 text-white',
+          },
+          { name: 'Audit Trail (HIPAA)', path: '/activity', icon: Clock },
+        ],
+      },
+      {
+        title: 'INSIGHTS & CONFIG',
+        items: [
+          { name: 'Reports & Analytics', path: '/reports', icon: BarChart3 },
+          { name: 'System Settings', path: '/settings', icon: Settings },
+          { name: 'Help & Knowledge', path: '/help', icon: HelpCircle },
+        ],
+      },
+    ];
+  };
+
+  const navGroups = getNavGroups();
+  const homePath = currentUser?.dashboardPath || '/dashboard';
 
   return (
     <>
@@ -92,7 +164,7 @@ export function AppSidebar({ isOpen, onClose }) {
       >
         {/* Brand Header */}
         <div className="h-16 flex items-center justify-between px-5 border-b border-navy-light/40 bg-navy-dark/40">
-          <NavLink to="/dashboard" onClick={onClose} className="flex items-center gap-2.5">
+          <NavLink to={homePath} onClick={onClose} className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary-600 to-teal-500 flex items-center justify-center text-white shadow-sm flex-shrink-0">
               <Activity className="w-5 h-5 stroke-[2.5]" />
             </div>
@@ -101,7 +173,11 @@ export function AppSidebar({ isOpen, onClose }) {
                 ClaimPilot <span className="text-teal-400">AI</span>
               </span>
               <span className="text-[10px] text-slate-400 font-medium tracking-tight mt-1 leading-none">
-                Smarter Claims. Better Healthcare.
+                {roleCode === 'admin'
+                  ? 'Admin Console'
+                  : roleCode === 'operator'
+                    ? 'Operator Portal'
+                    : 'Reviewer Portal'}
               </span>
             </div>
           </NavLink>
@@ -165,17 +241,24 @@ export function AppSidebar({ isOpen, onClose }) {
         <div className="p-3 border-t border-navy-light/40 bg-navy-dark/30">
           <div className="p-2.5 rounded-lg bg-navy-light/50 border border-navy-light/40 flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-semibold text-white">DataGuard Engine</p>
+              <p className="text-[11px] font-semibold text-white">
+                {roleCode === 'admin'
+                  ? 'Administrator Access'
+                  : roleCode === 'operator'
+                    ? 'Operator Terminal'
+                    : 'Reviewer Terminal'}
+              </p>
               <p className="text-[10px] text-teal-400 flex items-center gap-1 mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-                Active • 24 Checks Online
+                DataGuard • 24 Checks Online
               </p>
             </div>
-            <span className="text-[10px] font-mono text-slate-400">v1.0-prod</span>
+            <span className="text-[10px] font-mono text-slate-400 uppercase">
+              {roleCode || 'USER'}
+            </span>
           </div>
         </div>
       </aside>
     </>
   );
 }
-

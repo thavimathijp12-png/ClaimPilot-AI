@@ -28,7 +28,11 @@ export function DataGuardPage() {
   const [isRechecking, setIsRechecking] = useState(false);
   const [filterSeverity, setFilterSeverity] = useState('ALL');
 
-  const activeAudit = validations[selectedClaimId] || validations['CLM-2026-8910'] || {
+  const currentClaimId = claims.some((c) => c.id === selectedClaimId)
+    ? selectedClaimId
+    : (claims[0]?.id || selectedClaimId);
+
+  const activeAudit = validations[currentClaimId] || validations[selectedClaimId] || {
     score: 92,
     validCount: 18,
     missingCount: 1,
@@ -40,14 +44,14 @@ export function DataGuardPage() {
 
   const handleRecheck = async () => {
     setIsRechecking(true);
-    await rerunDataGuard(selectedClaimId);
+    await rerunDataGuard(currentClaimId);
     setIsRechecking(false);
-    toast.success('DataGuard IQ Audit Complete', `Automated consistency evaluation completed for ${selectedClaimId}.`);
+    toast.success('DataGuard IQ Audit Complete', `Automated consistency evaluation completed for ${currentClaimId}.`);
   };
 
   const handleExportQualityReport = () => {
-    const rows = activeAudit.items.map(item => ({
-      'Claim ID': selectedClaimId,
+    const rows = (activeAudit.items || []).map(item => ({
+      'Claim ID': currentClaimId,
       'Field / Rule Name': item.field,
       'Document Source': item.sourceDoc,
       'Extracted Value': item.extractedValue,
@@ -58,7 +62,7 @@ export function DataGuardPage() {
       'Recommended Correction': item.recommendation,
     }));
 
-    exportToCSV(`DataGuard_IQ_Report_${selectedClaimId}`, rows);
+    exportToCSV(`DataGuard_IQ_Report_${currentClaimId}`, rows);
     toast.info('Report Exported', 'DataGuard quality validation report downloaded.');
   };
 
@@ -109,7 +113,7 @@ export function DataGuardPage() {
           </label>
           <select
             id="claim-select"
-            value={selectedClaimId}
+            value={currentClaimId}
             onChange={(e) => setSelectedClaimId(e.target.value)}
             className="text-xs bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-primary-500/20"
           >
@@ -306,7 +310,7 @@ export function DataGuardPage() {
           DataGuard IQ Core Verification Modules
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
-          {dataGuardSummary.ruleCategories.map((cat, i) => (
+          {(dataGuardSummary?.ruleCategories || []).map((cat, i) => (
             <div key={i} className="p-3.5 rounded-lg border border-slate-200/80 bg-slate-50/50 flex items-center justify-between">
               <div>
                 <p className="font-bold text-navy">{cat.name}</p>

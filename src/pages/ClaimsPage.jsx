@@ -181,7 +181,7 @@ export function ClaimsPage() {
     setModalOpen(true);
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
 
     const validation = validateClaimForm(formData);
@@ -198,15 +198,18 @@ export function ClaimsPage() {
       copayAmount: validation.data.copayAmount ?? 0,
     };
 
-    if (editingClaim) {
-      updateClaim(editingClaim.id, claimData);
-      toast.success('Claim Updated', `Record for ${editingClaim.id} updated successfully.`);
-    } else {
-      const created = createClaim(claimData);
-      toast.success('Claim Registered', `New claim created with reference ${created.id}.`);
+    try {
+      if (editingClaim) {
+        await updateClaim(editingClaim.id, claimData);
+        toast.success('Claim Updated', `Record for ${editingClaim.id} updated successfully.`);
+      } else {
+        const created = await createClaim(claimData);
+        toast.success('Claim Registered', `New claim created with reference ${created?.id || ''}.`);
+      }
+      setModalOpen(false);
+    } catch (err) {
+      toast.error('Operation Failed', err.message || 'Unable to save claim record.');
     }
-
-    setModalOpen(false);
   };
 
   const handleFieldChange = (field, value) => {

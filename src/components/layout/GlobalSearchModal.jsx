@@ -34,21 +34,21 @@ export function GlobalSearchModal({ isOpen, onClose }) {
 
   const filteredClaims = term
     ? claims.filter(
-        c =>
-          c.id.toLowerCase().includes(term) ||
-          c.claimantName.toLowerCase().includes(term) ||
-          c.hospitalName.toLowerCase().includes(term) ||
-          c.policyNumber.toLowerCase().includes(term)
-      ).slice(0, 5)
+      c =>
+        c.id.toLowerCase().includes(term) ||
+        c.claimantName.toLowerCase().includes(term) ||
+        c.hospitalName.toLowerCase().includes(term) ||
+        c.policyNumber.toLowerCase().includes(term)
+    ).slice(0, 5)
     : [];
 
   const filteredDocs = term
     ? documents.filter(
-        d =>
-          d.name.toLowerCase().includes(term) ||
-          d.category.toLowerCase().includes(term) ||
-          d.claimId.toLowerCase().includes(term)
-      ).slice(0, 3)
+      d =>
+        d.name.toLowerCase().includes(term) ||
+        d.category.toLowerCase().includes(term) ||
+        d.claimId.toLowerCase().includes(term)
+    ).slice(0, 3)
     : [];
 
   const handleSelectClaim = (claimId) => {
