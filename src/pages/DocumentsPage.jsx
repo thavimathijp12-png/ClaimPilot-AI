@@ -7,6 +7,7 @@ import {
   UploadCloud,
   Search,
   Eye,
+  Download,
   Trash2,
   Sparkles,
   ZoomIn,
@@ -20,7 +21,7 @@ import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { formatFileSize, formatDate } from '../utils/formatters';
 
 export function DocumentsPage() {
-  const { documents, claims, uploadDocument, deleteDocument } = useClaims();
+  const { documents, claims, uploadDocument, deleteDocument, downloadDocument } = useClaims();
   const toast = useToast();
   const navigate = useNavigate();
 
@@ -45,20 +46,33 @@ export function DocumentsPage() {
     'Other Supporting Documents'
   ];
 
-  const handleUploadComplete = (fileMeta) => {
-    const doc = uploadDocument({
-      ...fileMeta,
-      claimId: selectedClaimForUpload,
-    });
-    toast.success('Document Uploaded', `File "${doc.name}" is ready for simulated extraction review.`);
-    setShowUploadModal(false);
+  const handleUploadComplete = async (fileMeta) => {
+    try {
+      if (!selectedClaimForUpload) {
+        toast.warning('Claim Required', 'Select a claim before uploading a document.');
+        return;
+      }
+      const doc = await uploadDocument({
+        ...fileMeta,
+        claimId: selectedClaimForUpload,
+      });
+      toast.success('Document Uploaded', `File "${doc.name}" was stored securely.`);
+      setShowUploadModal(false);
+    } catch (error) {
+      toast.error('Upload Failed', error.message);
+    }
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (deleteTargetId) {
-      deleteDocument(deleteTargetId);
-      toast.warning('Document Removed', 'Selected file has been deleted from repository.');
-      setDeleteTargetId(null);
+      try {
+        await deleteDocument(deleteTargetId);
+        toast.warning('Document Removed', 'Selected file has been deleted from repository.');
+      } catch (err) {
+        toast.error('Deletion Failed', err.message || 'Unable to delete document.');
+      } finally {
+        setDeleteTargetId(null);
+      }
     }
   };
 
@@ -208,6 +222,14 @@ export function DocumentsPage() {
                   title="Preview Document"
                 >
                   <Eye className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => downloadDocument(doc)}
+                  className="p-1.5 text-slate-500 hover:text-primary-600 hover:bg-primary-50 rounded-md transition-colors"
+                  title="Download Document"
+                >
+                  <Download className="w-4 h-4" />
                 </button>
                 <button
                   type="button"

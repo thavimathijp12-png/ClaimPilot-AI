@@ -2,9 +2,9 @@ export const INITIAL_ACTIVITIES = [
   {
     id: 'act-101',
     timestamp: '2026-11-17T11:45:00Z',
-    userName: 'Sarah Jenkins, RN',
+    userName: 'KirubhaShree',
     userRole: 'Claims Reviewer',
-    userAvatar: null,
+    userAvatar: '/reviewer-avatar.png',
     category: 'Approvals',
     action: 'Approved Claim',
     claimId: 'CLM-2026-8911',
@@ -26,9 +26,9 @@ export const INITIAL_ACTIVITIES = [
   {
     id: 'act-103',
     timestamp: '2026-11-17T10:30:10Z',
-    userName: 'Marcus Chen',
+    userName: 'Varshini',
     userRole: 'Claims Operator',
-    userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150',
+    userAvatar: '/operator-avatar.png',
     category: 'Extraction',
     action: 'AI Extraction Verified',
     claimId: 'CLM-2026-8910',
@@ -38,9 +38,9 @@ export const INITIAL_ACTIVITIES = [
   {
     id: 'act-104',
     timestamp: '2026-11-17T10:05:40Z',
-    userName: 'Marcus Chen',
+    userName: 'Varshini',
     userRole: 'Claims Operator',
-    userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150',
+    userAvatar: '/operator-avatar.png',
     category: 'Documents',
     action: 'Document Uploaded',
     claimId: 'CLM-2026-8917',
@@ -50,9 +50,9 @@ export const INITIAL_ACTIVITIES = [
   {
     id: 'act-105',
     timestamp: '2026-11-17T09:20:00Z',
-    userName: 'Sarah Jenkins, RN',
+    userName: 'KirubhaShree',
     userRole: 'Claims Reviewer',
-    userAvatar: null,
+    userAvatar: '/reviewer-avatar.png',
     category: 'Approvals',
     action: 'Requested Provider Correction',
     claimId: 'CLM-2026-8912',
@@ -62,7 +62,7 @@ export const INITIAL_ACTIVITIES = [
   {
     id: 'act-106',
     timestamp: '2026-11-16T16:40:00Z',
-    userName: 'Dr. Eleanor Vance',
+    userName: 'Dr. Thavimathi',
     userRole: 'Admin',
     userAvatar: '/admin-profile.png',
     category: 'Claims',
@@ -74,9 +74,9 @@ export const INITIAL_ACTIVITIES = [
   {
     id: 'act-107',
     timestamp: '2026-11-16T14:12:00Z',
-    userName: 'Marcus Chen',
+    userName: 'Varshini',
     userRole: 'Claims Operator',
-    userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150',
+    userAvatar: '/operator-avatar.png',
     category: 'Claims',
     action: 'New Claim Created',
     claimId: 'CLM-2026-8916',
@@ -86,7 +86,7 @@ export const INITIAL_ACTIVITIES = [
   {
     id: 'act-108',
     timestamp: '2026-11-16T09:00:15Z',
-    userName: 'Dr. Eleanor Vance',
+    userName: 'Dr. Thavimathi',
     userRole: 'Admin',
     userAvatar: '/admin-profile.png',
     category: 'System',
@@ -96,4 +96,3 @@ export const INITIAL_ACTIVITIES = [
     severity: 'info',
   }
 ];
-

@@ -19,7 +19,7 @@ export const INITIAL_CLAIMS = [
     priority: 'High',
     dataQualityScore: 94,
     description: 'Post-operative inpatient stay following laparoscopic cholecystectomy with secondary ultrasound evaluation.',
-    assignedTo: 'Sarah Jenkins, RN',
+    assignedTo: 'KirubhaShree',
     diagnosisCodes: [
       { code: 'K80.20', description: 'Calculus of gallbladder without cholecystitis without obstruction' },
       { code: 'Z98.890', description: 'Other specified postprocedural states' }
@@ -31,10 +31,10 @@ export const INITIAL_CLAIMS = [
     documentsCount: 4,
     reviewNotes: 'Discharge summary signed by Dr. Harrison. Verification of pre-authorization pending reviewer confirmation.',
     timeline: [
-      { id: 'evt-1', date: '2026-11-04T09:15:00Z', title: 'Claim Created', user: 'Marcus Chen', description: 'Submitted via electronic portal intake.' },
+      { id: 'evt-1', date: '2026-11-04T09:15:00Z', title: 'Claim Created', user: 'Varshini', description: 'Submitted via electronic portal intake.' },
       { id: 'evt-2', date: '2026-11-04T09:16:30Z', title: 'DataGuard IQ Audit Completed', user: 'System Engine', description: 'Initial quality score calculated: 94/100.' },
-      { id: 'evt-3', date: '2026-11-05T14:20:00Z', title: 'AI Extraction Verified', user: 'Marcus Chen', description: 'Itemized billing extraction approved.' },
-      { id: 'evt-4', date: '2026-11-06T10:00:00Z', title: 'Assigned to Reviewer', user: 'Dr. Eleanor Vance', description: 'Routing to clinical reviewer Sarah Jenkins, RN.' }
+      { id: 'evt-3', date: '2026-11-05T14:20:00Z', title: 'AI Extraction Verified', user: 'Varshini', description: 'Itemized billing extraction approved.' },
+      { id: 'evt-4', date: '2026-11-06T10:00:00Z', title: 'Assigned to Reviewer', user: 'Dr. Thavimathi', description: 'Routing to clinical reviewer KirubhaShree.' }
     ]
   },
   {
@@ -57,7 +57,7 @@ export const INITIAL_CLAIMS = [
     priority: 'Medium',
     dataQualityScore: 98,
     description: 'Outpatient MRI scan of right knee with contrast and orthopedic follow-up consult.',
-    assignedTo: 'Sarah Jenkins, RN',
+    assignedTo: 'KirubhaShree',
     diagnosisCodes: [
       { code: 'M23.22', description: 'Derangement of meniscus due to old tear or injury, right knee' }
     ],
@@ -68,9 +68,9 @@ export const INITIAL_CLAIMS = [
     documentsCount: 2,
     reviewNotes: 'All clinical criteria satisfied. Coverage verified under outpatient radiology schedule.',
     timeline: [
-      { id: 'evt-11', date: '2026-11-09T11:00:00Z', title: 'Claim Created', user: 'Marcus Chen', description: 'Document intake uploaded from hospital portal.' },
+      { id: 'evt-11', date: '2026-11-09T11:00:00Z', title: 'Claim Created', user: 'Varshini', description: 'Document intake uploaded from hospital portal.' },
       { id: 'evt-12', date: '2026-11-09T11:02:00Z', title: 'DataGuard IQ Verified', user: 'System Engine', description: 'Score: 98/100. No discrepancies detected.' },
-      { id: 'evt-13', date: '2026-11-10T16:30:00Z', title: 'Adjudication Approved', user: 'Sarah Jenkins, RN', description: 'Approved for full eligible payment of ₹3,240.00.' }
+      { id: 'evt-13', date: '2026-11-10T16:30:00Z', title: 'Adjudication Approved', user: 'KirubhaShree', description: 'Approved for full eligible payment of ₹3,240.00.' }
     ]
   },
   {
@@ -93,7 +93,7 @@ export const INITIAL_CLAIMS = [
     priority: 'High',
     dataQualityScore: 68,
     description: 'Acute chest pain emergency room evaluation and overnight telemetry observation.',
-    assignedTo: 'Sarah Jenkins, RN',
+    assignedTo: 'KirubhaShree',
     diagnosisCodes: [
       { code: 'R07.9', description: 'Chest pain, unspecified' },
       { code: 'I10', description: 'Essential (primary) hypertension' }
@@ -105,9 +105,9 @@ export const INITIAL_CLAIMS = [
     documentsCount: 3,
     reviewNotes: 'Missing primary physician diagnostic summary signature on emergency ledger. Itemized pharmacy breakdown incomplete.',
     timeline: [
-      { id: 'evt-21', date: '2026-11-05T08:30:00Z', title: 'Claim Created', user: 'Marcus Chen', description: 'Direct fax intake digitized.' },
+      { id: 'evt-21', date: '2026-11-05T08:30:00Z', title: 'Claim Created', user: 'Varshini', description: 'Direct fax intake digitized.' },
       { id: 'evt-22', date: '2026-11-05T08:35:00Z', title: 'DataGuard IQ Flagged', user: 'System Engine', description: 'Warning: Missing doctor signature detected in document page 2.' },
-      { id: 'evt-23', date: '2026-11-07T13:45:00Z', title: 'Correction Requested', user: 'Sarah Jenkins, RN', description: 'Returned to provider for countersigned clinical attestation.' }
+      { id: 'evt-23', date: '2026-11-07T13:45:00Z', title: 'Correction Requested', user: 'KirubhaShree', description: 'Returned to provider for countersigned clinical attestation.' }
     ]
   },
   {
@@ -130,7 +130,7 @@ export const INITIAL_CLAIMS = [
     priority: 'Low',
     dataQualityScore: 92,
     description: 'Pediatric allergy testing and immunotherapy consultation report.',
-    assignedTo: 'Sarah Jenkins, RN',
+    assignedTo: 'KirubhaShree',
     diagnosisCodes: [
       { code: 'J45.20', description: 'Mild intermittent asthma, uncomplicated' },
       { code: 'T78.40XA', description: 'Allergy, unspecified, initial encounter' }
@@ -141,7 +141,7 @@ export const INITIAL_CLAIMS = [
     documentsCount: 2,
     reviewNotes: 'All clear. Ready for final review queue.',
     timeline: [
-      { id: 'evt-31', date: '2026-11-11T14:10:00Z', title: 'Claim Created', user: 'Marcus Chen', description: 'Clinic electronic transmission received.' }
+      { id: 'evt-31', date: '2026-11-11T14:10:00Z', title: 'Claim Created', user: 'Varshini', description: 'Clinic electronic transmission received.' }
     ]
   },
   {
@@ -164,7 +164,7 @@ export const INITIAL_CLAIMS = [
     priority: 'High',
     dataQualityScore: 54,
     description: 'Cardiac catheterization with stent placement. Discrepancy in pre-authorization documentation and out-of-network facility billing.',
-    assignedTo: 'Dr. Eleanor Vance',
+    assignedTo: 'Dr. Thavimathi',
     diagnosisCodes: [
       { code: 'I25.10', description: 'Atherosclerotic heart disease of native coronary artery' }
     ],
@@ -174,8 +174,8 @@ export const INITIAL_CLAIMS = [
     documentsCount: 5,
     reviewNotes: 'Claim rejected due to lack of prior authorization code match and non-covered facility rider.',
     timeline: [
-      { id: 'evt-41', date: '2026-10-24T10:00:00Z', title: 'Claim Created', user: 'Marcus Chen', description: 'Initial file upload received.' },
-      { id: 'evt-42', date: '2026-10-28T11:15:00Z', title: 'Claim Formally Rejected', user: 'Dr. Eleanor Vance', description: 'Denied under non-contracted protocol Section 4.2.' }
+      { id: 'evt-41', date: '2026-10-24T10:00:00Z', title: 'Claim Created', user: 'Varshini', description: 'Initial file upload received.' },
+      { id: 'evt-42', date: '2026-10-28T11:15:00Z', title: 'Claim Formally Rejected', user: 'Dr. Thavimathi', description: 'Denied under non-contracted protocol Section 4.2.' }
     ]
   },
   {
@@ -198,7 +198,7 @@ export const INITIAL_CLAIMS = [
     priority: 'Medium',
     dataQualityScore: 88,
     description: 'Specialty injectable biologic medication dispensation for autoimmune arthritis.',
-    assignedTo: 'Marcus Chen',
+    assignedTo: 'Varshini',
     diagnosisCodes: [
       { code: 'M06.9', description: 'Rheumatoid arthritis, unspecified' }
     ],
@@ -208,7 +208,7 @@ export const INITIAL_CLAIMS = [
     documentsCount: 2,
     reviewNotes: 'AI extraction running itemized NDC verification against pharmacy benefit formulary.',
     timeline: [
-      { id: 'evt-51', date: '2026-11-13T08:00:00Z', title: 'Claim Created', user: 'Marcus Chen', description: 'Pharmacy claims batch uploaded.' },
+      { id: 'evt-51', date: '2026-11-13T08:00:00Z', title: 'Claim Created', user: 'Varshini', description: 'Pharmacy claims batch uploaded.' },
       { id: 'evt-52', date: '2026-11-13T08:02:00Z', title: 'AI Extraction Triggered', user: 'System Engine', description: 'Optical character recognition processing prescription slip.' }
     ]
   },
@@ -232,7 +232,7 @@ export const INITIAL_CLAIMS = [
     priority: 'Low',
     dataQualityScore: 97,
     description: 'Outpatient arthroscopic repair of left rotator cuff tendon.',
-    assignedTo: 'Sarah Jenkins, RN',
+    assignedTo: 'KirubhaShree',
     diagnosisCodes: [
       { code: 'M75.12', description: 'Complete rotator cuff tear or rupture of left shoulder' }
     ],
@@ -242,8 +242,8 @@ export const INITIAL_CLAIMS = [
     documentsCount: 3,
     reviewNotes: 'Clinical indications and operative report verified. In-network provider confirmed.',
     timeline: [
-      { id: 'evt-61', date: '2026-11-07T12:00:00Z', title: 'Claim Created', user: 'Marcus Chen', description: 'Surgical center submitted records.' },
-      { id: 'evt-62', date: '2026-11-09T14:30:00Z', title: 'Claim Approved', user: 'Sarah Jenkins, RN', description: 'Authorization validated, claim approved for disbursement.' }
+      { id: 'evt-61', date: '2026-11-07T12:00:00Z', title: 'Claim Created', user: 'Varshini', description: 'Surgical center submitted records.' },
+      { id: 'evt-62', date: '2026-11-09T14:30:00Z', title: 'Claim Approved', user: 'KirubhaShree', description: 'Authorization validated, claim approved for disbursement.' }
     ]
   },
   {
@@ -266,7 +266,7 @@ export const INITIAL_CLAIMS = [
     priority: 'Medium',
     dataQualityScore: 91,
     description: 'Acute appendicitis diagnosis, ultrasound confirmation, and supportive hydration.',
-    assignedTo: 'Sarah Jenkins, RN',
+    assignedTo: 'KirubhaShree',
     diagnosisCodes: [
       { code: 'K35.80', description: 'Unspecified acute appendicitis' }
     ],
@@ -276,7 +276,7 @@ export const INITIAL_CLAIMS = [
     documentsCount: 3,
     reviewNotes: 'Ultrasound images attached. In queue for final clinical adjudication.',
     timeline: [
-      { id: 'evt-71', date: '2026-11-15T10:00:00Z', title: 'Claim Intake', user: 'Marcus Chen', description: 'Transmitted from emergency admitting wing.' }
+      { id: 'evt-71', date: '2026-11-15T10:00:00Z', title: 'Claim Intake', user: 'Varshini', description: 'Transmitted from emergency admitting wing.' }
     ]
   }
 ];

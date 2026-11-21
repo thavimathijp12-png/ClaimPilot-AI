@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Command, Keyboard, X } from 'lucide-react';
+import { Keyboard } from 'lucide-react';
 import { Modal } from './Modal';
 
 export function KeyboardShortcutsModal({ isOpen, onClose }) {

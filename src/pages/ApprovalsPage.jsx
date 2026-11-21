@@ -40,7 +40,7 @@ export function ApprovalsPage() {
 
   const activeClaim = pendingClaims.find((c) => c.id === selectedClaimId) || pendingClaims[0];
 
-  const handleDecisionConfirm = (notesOrReason) => {
+  const handleDecisionConfirm = async (notesOrReason) => {
     const claimToAdjudicate = decisionModal.claimId;
     if (!claimToAdjudicate) return false;
     const isPending = pendingClaims.some((claim) => claim.id === claimToAdjudicate);
@@ -52,11 +52,11 @@ export function ApprovalsPage() {
 
     let updated = false;
     if (decisionModal.action === 'approve') {
-      updated = approveClaim(claimToAdjudicate, notesOrReason);
+      updated = await approveClaim(claimToAdjudicate, notesOrReason);
     } else if (decisionModal.action === 'reject') {
-      updated = rejectClaim(claimToAdjudicate, notesOrReason);
+      updated = await rejectClaim(claimToAdjudicate, notesOrReason);
     } else if (decisionModal.action === 'correction') {
-      updated = requestCorrection(claimToAdjudicate, notesOrReason);
+      updated = await requestCorrection(claimToAdjudicate, notesOrReason);
     }
 
     if (!updated) return false;

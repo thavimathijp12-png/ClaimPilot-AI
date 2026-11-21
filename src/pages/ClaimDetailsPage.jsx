@@ -21,7 +21,7 @@ import {
 import { StatusBadge } from '../components/common/StatusBadge';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import CodeBadge from '../components/common/CodeBadge';
-import { formatCurrency, formatDate, formatRelativeTime, formatFileSize } from '../utils/formatters';
+import { formatCurrency, formatDate, formatFileSize } from '../utils/formatters';
 
 export function ClaimDetailsPage() {
   const { id } = useParams();
@@ -58,14 +58,14 @@ export function ClaimDetailsPage() {
     );
   }
 
-  const handleDecisionConfirm = (notesOrReason) => {
+  const handleDecisionConfirm = async (notesOrReason) => {
     let updated = false;
     if (decisionModal.action === 'approve') {
-      updated = approveClaim(claim.id, notesOrReason);
+      updated = await approveClaim(claim.id, notesOrReason);
     } else if (decisionModal.action === 'reject') {
-      updated = rejectClaim(claim.id, notesOrReason);
+      updated = await rejectClaim(claim.id, notesOrReason);
     } else if (decisionModal.action === 'correction') {
-      updated = requestCorrection(claim.id, notesOrReason);
+      updated = await requestCorrection(claim.id, notesOrReason);
     }
 
     if (!updated) {
@@ -85,11 +85,12 @@ export function ClaimDetailsPage() {
     return true;
   };
 
-  const handleAddComment = (e) => {
+  const handleAddComment = async (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
 
-    if (!addClaimComment(claim.id, newComment)) return;
+    const added = await addClaimComment(claim.id, newComment);
+    if (!added) return;
 
     setNewComment('');
     toast.info('Comment Appended', 'Audit note recorded on claim timeline.');
@@ -408,15 +409,15 @@ export function ClaimDetailsPage() {
           decisionModal.action === 'approve'
             ? 'Confirm Claim Approval'
             : decisionModal.action === 'reject'
-            ? 'Reject Healthcare Claim'
-            : 'Request Provider Correction'
+              ? 'Reject Healthcare Claim'
+              : 'Request Provider Correction'
         }
         message={
           decisionModal.action === 'approve'
             ? `Are you sure you want to approve claim ${claim.id} for the full billed sum of ${formatCurrency(claim.claimAmount)}? This will record your name in the clinical audit history.`
             : decisionModal.action === 'reject'
-            ? `Rejecting claim ${claim.id} will deny disbursement. A mandatory clinical or compliance reason is required.`
-            : `Please enter the specific clinical corrections or documentation items required from the provider.`
+              ? `Rejecting claim ${claim.id} will deny disbursement. A mandatory clinical or compliance reason is required.`
+              : `Please enter the specific clinical corrections or documentation items required from the provider.`
         }
         confirmLabel={
           decisionModal.action === 'approve' ? 'Approve Claim' : decisionModal.action === 'reject' ? 'Deny & Reject' : 'Send Correction Notice'
