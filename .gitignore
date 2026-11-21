@@ -10,4 +10,10 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.mvn-portable/
+backend/target/
+scratch/
+data/documents/*
+!data/documents/.gitkeep
+.vscode/
 
