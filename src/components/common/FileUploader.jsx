@@ -116,6 +116,7 @@ export function FileUploader({
         const extension = file.name.split('.').pop().toLowerCase();
         const fileType = extension === 'pdf' ? 'PDF' : extension.toUpperCase();
         onUploadComplete?.({
+          file,
           name: file.name,
           sizeBytes: file.size,
           fileType,

@@ -34,28 +34,54 @@ import { StatCard } from '../components/common/StatCard';
 import { ChartCard } from '../components/common/ChartCard';
 import { formatCurrency } from '../utils/formatters';
 import { exportToCSV } from '../services/exportService';
-import {
-  MONTHLY_TREND_DATA,
-  STATUS_DISTRIBUTION_DATA,
-  CLAIM_TYPE_DISTRIBUTION,
-  DATA_QUALITY_DISTRIBUTION,
-  DOCUMENT_PROCESSING_METRICS,
-} from '../data/mockAnalytics';
 
 export function ReportsPage() {
-  const { claims } = useClaims();
+  const { claims, documents, analytics, trends, claimReport } = useClaims();
   const toast = useToast();
 
   const [dateRange, setDateRange] = useState('90d');
+  const trendChart = (trends || []).map((item) => ({
+    date: item.date,
+    totalClaims: item.count,
+    approved: claims.filter((claim) => claim.status === 'Approved' &&
+      claim.submissionDate?.slice(0, 10) === item.date).length,
+  }));
+  const typeVolume = ['Inpatient', 'Outpatient', 'Emergency'].map((name, index) => ({
+    name,
+    amount: claims.filter((claim) => claim.claimType === name)
+      .reduce((sum, claim) => sum + Number(claim.claimAmount || 0), 0),
+    color: ['#10233F', '#2563EB', '#0D9488'][index],
+  }));
+  const scores = claims.map((claim) => Number(claim.dataQualityScore || 0)).filter((score) => score > 0);
+  const qualityAverage = scores.length
+    ? scores.reduce((sum, score) => sum + score, 0) / scores.length
+    : Number(analytics?.averageDataQualityScore || 0);
+  const qualityTiers = [
+    { name: 'Excellent (90-100)', count: scores.filter((score) => score >= 90).length, color: '#10B981' },
+    { name: 'Good (75-89)', count: scores.filter((score) => score >= 75 && score < 90).length, color: '#2563EB' },
+    { name: 'Needs Review (<75)', count: scores.filter((score) => score < 75).length, color: '#F59E0B' },
+  ].map((tier) => ({
+    ...tier,
+    percentage: scores.length ? Math.round((tier.count / scores.length) * 100) : 0,
+  }));
+  const documentCategories = [...new Set(documents.map((document) => document.category).filter(Boolean))]
+    .slice(0, 6)
+    .map((category) => ({
+      category,
+      count: documents.filter((document) => document.category === category).length,
+      avgPages: 1,
+    }));
 
   const handleExportFullReport = () => {
-    const rows = MONTHLY_TREND_DATA.map(m => ({
-      'Reporting Month': m.month,
-      'Total Claims Ingested': m.totalClaims,
-      'Approved Claims': m.approved,
-      'Rejected Claims': m.rejected,
-      'Corrections Requested': m.correction,
-      'Billed Financial Volume (INR)': m.volumeInr || m.volumeUsd,
+    const rows = (claimReport?.content || claims).map((claim) => ({
+      'Claim ID': claim.id,
+      'Claimant': claim.claimantName,
+      'Hospital': claim.hospitalName,
+      'Status': claim.status,
+      'Claim Amount (INR)': claim.claimAmount,
+      'Approved Amount (INR)': claim.approvedAmount,
+      'DataGuard Score': claim.dataQualityScore,
+      'Submission Date': claim.submissionDate,
     }));
     exportToCSV('ClaimPilot_Executive_Analytics_Report', rows);
     toast.success('Report Exported', 'Executive analytics downloaded as CSV.');
@@ -94,33 +120,32 @@ export function ReportsPage() {
       {/* High-Level Executive Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Total Claims Volume (H2)"
-          value="11,090"
-          subtitle="₹34.5 Cr cumulative billed value"
+          title="Total Claims Volume"
+          value={(analytics?.totalClaims ?? claims.length).toLocaleString()}
+          subtitle={`${formatCurrency(analytics?.totalClaimedAmount ?? 0)} cumulative billed value`}
           icon={TrendingUp}
-          trend={14.8}
           variant="primary"
         />
         <StatCard
           title="Clinical Approval Ratio"
-          value="88.2%"
-          subtitle="Meets CMS medical necessity standard"
+          value={`${analytics?.totalClaims
+            ? ((Number(analytics.approvedClaims) / Number(analytics.totalClaims)) * 100).toFixed(1)
+            : 0}%`}
+          subtitle={`${analytics?.approvedClaims ?? 0} approved claims`}
           icon={CheckCircle2}
-          trend={2.4}
           variant="teal"
         />
         <StatCard
-          title="Mean Adjudication Velocity"
-          value="3.2 Days"
-          subtitle="Down from 6.8 days pre-AI"
+          title="Documents"
+          value={(analytics?.totalDocuments ?? documents.length).toLocaleString()}
+          subtitle="Stored claim evidence"
           icon={Clock}
-          trend={-24.5}
           variant="default"
         />
         <StatCard
-          title="OCR Extraction Precision"
-          value="98.7%"
-          subtitle="Over 8,940 verified pages"
+          title="Average DataGuard Score"
+          value={`${qualityAverage.toFixed(1)}%`}
+          subtitle="Deterministic quality checks"
           icon={ShieldCheck}
           trend={1.2}
           variant="amber"
@@ -135,7 +160,7 @@ export function ReportsPage() {
           subtitle="Trajectory of ingested claims vs. final approvals (Jun - Nov 2026)"
         >
           <ResponsiveContainer width="100%" height={280}>
-            <AreaChart data={MONTHLY_TREND_DATA} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+            <AreaChart data={trendChart} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
               <defs>
                 <linearGradient id="areaTotal" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#2563EB" stopOpacity={0.3} />
@@ -147,7 +172,7 @@ export function ReportsPage() {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748B' }} stroke="#CBD5E1" />
+              <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#64748B' }} stroke="#CBD5E1" />
               <YAxis tick={{ fontSize: 11, fill: '#64748B' }} stroke="#CBD5E1" />
               <Tooltip
                 contentStyle={{
@@ -170,7 +195,7 @@ export function ReportsPage() {
           subtitle="Cumulative charges distributed across hospital inpatient, outpatient, and emergency care"
         >
           <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={CLAIM_TYPE_DISTRIBUTION} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+            <BarChart data={typeVolume} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748B' }} stroke="#CBD5E1" />
               <YAxis
@@ -189,7 +214,7 @@ export function ReportsPage() {
                 }}
               />
               <Bar dataKey="amount" name="Financial Volume" fill="#10233F" radius={[4, 4, 0, 0]}>
-                {CLAIM_TYPE_DISTRIBUTION.map((entry, index) => (
+                {typeVolume.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Bar>
@@ -207,7 +232,7 @@ export function ReportsPage() {
             <p className="text-xs text-content-muted mt-0.5">Automated validation outcome distribution across portfolio</p>
 
             <div className="mt-5 space-y-4">
-              {DATA_QUALITY_DISTRIBUTION.map((tier, idx) => (
+              {qualityTiers.map((tier, idx) => (
                 <div key={idx} className="space-y-1.5 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-slate-700">{tier.name}</span>
@@ -228,7 +253,7 @@ export function ReportsPage() {
 
           <div className="mt-6 p-3 rounded-lg bg-teal-50/60 border border-teal-100 text-[11px] text-teal-800 flex items-center justify-between">
             <span>Overall Portfolio Quality Benchmark:</span>
-            <span className="font-bold text-teal-900 text-xs">92.4% (Industry Top Decile)</span>
+            <span className="font-bold text-teal-900 text-xs">{qualityAverage.toFixed(1)}%</span>
           </div>
         </div>
 
@@ -239,7 +264,7 @@ export function ReportsPage() {
             <p className="text-xs text-content-muted mt-0.5">Summary of digitized clinical paper records</p>
 
             <div className="mt-4 divide-y divide-slate-100 text-xs">
-              {DOCUMENT_PROCESSING_METRICS.documentsByCategory.map((docCat, i) => (
+              {documentCategories.map((docCat, i) => (
                 <div key={i} className="py-2.5 flex items-center justify-between">
                   <span className="font-medium text-slate-700">{docCat.category}</span>
                   <div className="flex items-center gap-4 text-slate-500">
