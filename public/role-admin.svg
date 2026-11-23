@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <linearGradient id="admBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="24" fill="url(#admBg)"/>
+  <!-- Shield Emblem -->
+  <path d="M100 35 L145 55 C145 105, 125 135, 100 155 C75 135, 55 105, 55 55 Z" fill="#1E3A8A" stroke="#3B82F6" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Inner Shield -->
+  <path d="M100 45 L135 62 C135 100, 118 124, 100 142 C82 124, 65 100, 65 62 Z" fill="#0F172A"/>
+  <!-- Crown / Star Authority -->
+  <path d="M100 68 L105 82 L120 82 L108 91 L112 105 L100 96 L88 105 L92 91 L80 82 L95 82 Z" fill="url(#gold)"/>
+  <!-- Key / Lock Icon -->
+  <circle cx="100" cy="116" r="6" fill="#38BDF8"/>
+  <path d="M100 122 L100 132" stroke="#38BDF8" stroke-width="3" stroke-linecap="round"/>
+  <!-- Badge Ribbon -->
+  <rect x="40" y="165" width="120" height="20" rx="10" fill="#2563EB"/>
+  <text x="100" y="179" font-family="system-ui, sans-serif" font-size="10" font-weight="bold" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">ADMINISTRATOR</text>
+</svg>
