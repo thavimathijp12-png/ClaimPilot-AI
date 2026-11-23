@@ -242,4 +242,4 @@ When Antigravity IDE shows **"Review Changes"**, **"Comparison"**, or **"Accept 
 
 ### MySQL Access Denied (Error 1045)
 - Verify that your MySQL server password matches the `$env:DB_PASSWORD` value in your terminal session before launching Maven or Spring Boot.
-- 
+- Verify that your MySQL server password matches the `$env:DB_PASSWORD` value in your terminal session before launching Maven or Spring Boot.

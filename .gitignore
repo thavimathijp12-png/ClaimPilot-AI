@@ -16,4 +16,3 @@ scratch/
 data/documents/*
 !data/documents/.gitkeep
 .vscode/
-
